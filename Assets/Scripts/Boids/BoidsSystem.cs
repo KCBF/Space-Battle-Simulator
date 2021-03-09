@@ -1,4 +1,5 @@
-﻿using Unity.Entities;
+﻿using System.Collections.Generic;
+using Unity.Entities;
 using Unity.Transforms;
 using Unity.Mathematics;
 using Unity.Physics;
@@ -25,70 +26,108 @@ public class BoidsSystem : ComponentSystem
     protected override void OnUpdate()
     {
         collisionWorld = physicsWorldSystem.PhysicsWorld.CollisionWorld;
-        float viewDst = 10.0f;
+        float deltaTime = Time.DeltaTime;
 
-        Entities.ForEach((Entity entity, 
-            ref Translation translation, ref Rotation rot, 
-            ref PhysicsVelocity velocity, ref PhysicsMass mass,
-            ref BoidComponent boid) =>
-        {
-            float3 forwardForce = math.forward(rot.Value) * 0.05f;
-            ComponentExtensions.ApplyLinearImpulse(ref velocity, mass, forwardForce);
-
-            NativeList<int> neighbours = new NativeList<int>(Allocator.Temp);
-            GetNeighbours(collisionWorld, translation.Value, out neighbours, viewDst);
-
-            int neighbourCount = 0;
-
-            float3 averagePos = float3.zero;
-            float3 averageVelocity = float3.zero;
-            float3 averageSeparation = float3.zero;
-
-            foreach (int neighbourIdx in neighbours)
+        Entities
+            .ForEach((Entity entity,
+                ref Translation translation, ref Rotation rot,
+                ref PhysicsVelocity velocity, ref PhysicsMass mass,
+                ref BoidComponent boid) =>
             {
-                Entity neighbourEntity = collisionWorld.Bodies[neighbourIdx].Entity;
-                if (neighbourEntity == entity)
-                    continue;
+                if (boid.SettingsEntity == Entity.Null)
+                    return;
 
-                RigidTransform neighbourTransform = collisionWorld.Bodies[neighbourIdx].WorldFromBody;
-                PhysicsVelocity neighbourVelocity = EntityManager.GetComponentData<PhysicsVelocity>(neighbourEntity);
+                BoidSettingsComponent settings = EntityManager.GetComponentData<BoidSettingsComponent>(boid.SettingsEntity);
+                float3 forward = math.forward(rot.Value);
+                float3 up = math.rotate(rot.Value, math.up());
 
-                if (!CanSeeNeighbour(translation.Value, neighbourTransform.pos, viewDst))
-                    continue;
+                float3 sumNeighbourPos;
+                float3 sumNeighbourVelocity;
+                float3 sumNeighbourNormalDelta;
 
-                ++neighbourCount;
+                int neighbourCount = GetNeighbourSumData(
+                    entity, translation.Value, forward, settings,
+                    out sumNeighbourPos, out sumNeighbourVelocity, out sumNeighbourNormalDelta
+                );
 
-                averagePos += neighbourTransform.pos;
-                averageVelocity += neighbourVelocity.Linear;
-                averageSeparation += math.normalize(translation.Value - neighbourTransform.pos);
-            }
+                float invsNeighbourCount = (neighbourCount > 1) ? 1.0f / neighbourCount : 1.0f;
 
-            if (neighbourCount == 0)
-                return;
+                float3 averagePos = sumNeighbourPos * invsNeighbourCount;
+                float3 cohesionForce = averagePos - translation.Value;
 
-            averagePos /= neighbourCount;
-            averagePos -= translation.Value;
+                //cohesionForce = SmoothDamp(forward * settings.MoveSpeed * Time.DeltaTime, cohesionForce, ref vel, 10.5f, math.INFINITY, deltaTime);
+                cohesionForce *= settings.CohesionScalar;
 
-            averageVelocity /= neighbourCount;
-            averageVelocity -= velocity.Linear;
-            averageVelocity *= 10.0f;
+                float3 averageVelocity = sumNeighbourVelocity * invsNeighbourCount;
+                float3 alignmentForce = math.normalizesafe(averageVelocity) * settings.MoveSpeed;
+                alignmentForce -= velocity.Linear;
+                alignmentForce *= settings.AlignmentScalar;
 
-            averageSeparation /= neighbourCount;
-            averageSeparation *= 10.0f;
+                float3 averageSeparation = sumNeighbourNormalDelta * invsNeighbourCount;
+                float3 separationForce = averageSeparation;
+                separationForce *= settings.SeparationScalar;
 
-            float3 separation = averageSeparation;
-            float3 alignment = averageVelocity;
-            float3 cohesion = averagePos;
+                float3 moveForce = cohesionForce + alignmentForce + separationForce;
+                
+                velocity.Linear += moveForce;
 
-            float3 moveForce = separation + alignment + cohesion;
-            velocity.Linear += moveForce;
+                float3 lookDir = math.normalizesafe(velocity.Linear);
+                quaternion lookRot = quaternion.LookRotationSafe(lookDir, up);
+                rot.Value = math.slerp(rot.Value, lookRot, Time.DeltaTime * settings.LookSpeed);
 
-            velocity.Linear.y = 0.0f;
-            //ComponentExtensions.ApplyLinearImpulse(ref velocity, mass, moveForce);
-        });        
+                /*float3 forwardForce = forward * settings.MoveSpeed * Time.DeltaTime;
+                ComponentExtensions.ApplyLinearImpulse(ref velocity, mass, forwardForce);*/
+                velocity.Linear.y = 0.0f;
+            });
     }
 
-    bool GetNeighbours(CollisionWorld collisionWorld, float3 entityPos, out NativeList<int> neighbours, float viewDst)
+    int GetNeighbourSumData(Entity entity, float3 entityPos, float3 entityForward, in BoidSettingsComponent boidSetttings, 
+        out float3 sumNeighbourPos, out float3 sumNeighbourVelocity, out float3 sumNeighbourNormalDelta)
+    {
+        NativeList<int> neighbours = new NativeList<int>(Allocator.Temp);
+        GetBroadNeighbours(collisionWorld, entityPos, out neighbours, boidSetttings.ViewDst);
+
+        int neighbourCount = 0;
+        sumNeighbourPos = float3.zero;
+        sumNeighbourVelocity = float3.zero;
+        sumNeighbourNormalDelta = float3.zero;
+
+        foreach (int neighbourIdx in neighbours)
+        {
+            RigidBody rigidBody = collisionWorld.Bodies[neighbourIdx];
+
+            Entity neighbourEntity = rigidBody.Entity;
+            if (neighbourEntity == entity)
+                continue;
+
+            // filter....
+
+            RigidTransform neighbourTransform = rigidBody.WorldFromBody;
+
+            if (!CanSeeNeighbour(entityPos, entityForward, neighbourTransform.pos, boidSetttings.ViewDst, boidSetttings.ViewAngle))
+                continue;
+
+            PhysicsVelocity neighbourVelocity = EntityManager.GetComponentData<PhysicsVelocity>(neighbourEntity);
+
+            bool isBoid = EntityManager.HasComponent<BoidComponent>(entity);
+            ++neighbourCount;
+
+            if (isBoid)
+            {
+                sumNeighbourPos += neighbourTransform.pos;
+                sumNeighbourVelocity += neighbourVelocity.Linear;
+                sumNeighbourNormalDelta += math.normalize(entityPos - neighbourTransform.pos);
+            }
+            else
+            {
+
+            }
+        }
+
+        return neighbourCount;
+    }
+
+    bool GetBroadNeighbours(CollisionWorld collisionWorld, float3 entityPos, out NativeList<int> neighbours, float viewDst)
     {
         OverlapAabbInput aabbQuery = new OverlapAabbInput
         {
@@ -105,9 +144,24 @@ public class BoidsSystem : ComponentSystem
         return collisionWorld.OverlapAabb(aabbQuery, ref neighbours);
     }
 
-    bool CanSeeNeighbour(float3 entityPos, float3 neighbourPos, float viewDst)
+    bool CanSeeNeighbour(float3 entityPos, float3 entityForward, float3 neighbourPos, float viewDst, float viewAngle)
     {
         float3 deltaPos = entityPos - neighbourPos;
-        return math.lengthsq(deltaPos) <= viewDst * viewDst;
+        bool canSee = math.lengthsq(deltaPos) <= viewDst * viewDst;
+
+        Vector3 dirToNeighbour = Vector3.Normalize(deltaPos);
+        float deltaAngle = Vector3.Angle(entityForward, dirToNeighbour);
+
+        canSee &= deltaAngle <= viewAngle * 0.5f;
+        return canSee;
+    }
+
+    public static Vector3 SmoothDamp(float3 current, float3 target, ref float3 currentVelocity, float smoothTime, float maxSpeed, float deltaTime)
+    {
+        Vector3 currentVelocityF3 = currentVelocity;
+        Vector3 value = Vector3.SmoothDamp(current, target, ref currentVelocityF3, smoothTime, maxSpeed, deltaTime);
+        
+        currentVelocity = currentVelocityF3;
+        return value;
     }
 }

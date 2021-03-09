@@ -3,5 +3,6 @@
 [GenerateAuthoringComponent]
 public struct BoidComponent : IComponentData
 {
-    public uint teamID;
+    public uint GroupID;
+    public Entity SettingsEntity;
 }

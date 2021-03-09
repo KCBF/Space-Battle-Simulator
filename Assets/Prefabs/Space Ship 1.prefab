@@ -108,7 +108,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 473ae9a0ac3034c40a75c904dbcf1295, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  teamID: 1
+  GroupID: 0
+  SettingsEntity: {fileID: 0}
 --- !u!54 &5730769230392709492
 Rigidbody:
   m_ObjectHideFlags: 0
