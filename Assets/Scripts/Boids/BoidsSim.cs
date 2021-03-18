@@ -8,8 +8,11 @@ using Unity.Mathematics;
 using Unity.Physics;
 
 [System.Serializable]
-public struct BoidGroup
+public class BoidGroup
 {
+    public uint numToSpawn = 10;
+    public float spawnRadius = 100.0f;
+
     public GameObject spaceShip;
     public Entity spaceShipEntity;
     public BlobAssetStore blobAssetStore;
@@ -25,21 +28,8 @@ public struct BoidGroup
         InitSpaceShipEntity();
     }
 
-    public void ClampMinSeparation()
-    {
-        if (spaceShip == null)
-            return;
-
-        Vector3 boundsSize = spaceShip.GetComponent<UnityEngine.Collider>().bounds.size;
-        int minAxisI = Math.IndexOfMinComponent(boundsSize);
-        float minAxis = boundsSize[minAxisI];
-
-        settings.SeparationScalar = math.max(settings.SeparationScalar, minAxis);
-    }
-
     public void SetSettingsComponentData(EntityManager entityManager)
     {
-        ClampMinSeparation();
         entityManager.SetComponentData(settingsEntity, settings);
     }
 
@@ -56,34 +46,45 @@ public struct BoidGroup
 
 public class BoidsSim : MonoBehaviour
 {
-    public BoidGroup boidGroup;
+    public BoidGroup[] boidGroups;
+    public int previewGroupI;
 
     public CameraEntityTarget cameraEntityTarget;
 
     EntityManager entityManager;
+    Unity.Mathematics.Random random;
 
     void Start()
     {
         entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
-        boidGroup.Init(entityManager);
+        random = new Unity.Mathematics.Random(5);
 
-        SpawnBoids(10);
+        foreach (BoidGroup boidGroup in boidGroups)
+        {
+            boidGroup.Init(entityManager);
+            SpawnBoids(boidGroup.numToSpawn, boidGroup);
+        }
     }
 
-    public void SpawnBoids(uint num)
+    public void SpawnBoids(uint num, BoidGroup boidGroup)
     {
-        Unity.Mathematics.Random random = new Unity.Mathematics.Random(2);
-
         for (uint i = 0; i < num; ++i)
         {
             Entity entity = entityManager.Instantiate(boidGroup.spaceShipEntity);
-            
-            float3 spawnPos = random.NextFloat3Direction() * 100.0f;
-            spawnPos.y = 0.0f;
-            entityManager.SetComponentData(entity, new Translation { Value = spawnPos });
-            entityManager.SetComponentData(entity, new PhysicsVelocity { Linear = random.NextFloat3Direction() * 20.0f });
 
-            entityManager.SetComponentData(entity, new BoidComponent { SettingsEntity = boidGroup.settingsEntity });
+            float3 spawnPos = random.NextFloat3Direction() * boidGroup.spawnRadius;
+            spawnPos += boidGroup.settings.MapCentre;
+            spawnPos.y = 0.0f;
+
+            float3 vel = random.NextFloat3Direction() * boidGroup.settings.MoveSpeed;
+            vel.y = 0.0f;
+
+            entityManager.SetComponentData(entity, new Translation { Value = spawnPos });
+            entityManager.SetComponentData(entity, new PhysicsVelocity { Linear = vel });
+
+            BoidComponent boid = entityManager.GetComponentData<BoidComponent>(entity);
+            boid.SettingsEntity = boidGroup.settingsEntity;
+            entityManager.SetComponentData(entity, boid);
 
             if (i == 0)
                 cameraEntityTarget.targetEntity = entity;
@@ -92,31 +93,53 @@ public class BoidsSim : MonoBehaviour
 
     private void Update()
     {
-        boidGroup.SetSettingsComponentData(entityManager);
+        foreach (BoidGroup boidGroup in boidGroups)
+            boidGroup.SetSettingsComponentData(entityManager);
     }
 
     private void OnDestroy()
     {
-        boidGroup.blobAssetStore.Dispose();
-    }
-
-    private void OnValidate()
-    {
-        boidGroup.ClampMinSeparation();
+        foreach (BoidGroup boidGroup in boidGroups)
+            boidGroup.blobAssetStore.Dispose();
     }
 
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, boidGroup.settings.ViewDst);
+        previewGroupI = Mathf.Clamp(previewGroupI, 0, boidGroups.Length - 1);
+        if (boidGroups.Length == 0)
+            return;
 
-        float halfFOV = boidGroup.settings.ViewAngle * 0.5f;
-        Vector3 leftRayDirection = Quaternion.AngleAxis(-halfFOV, Vector3.up) * transform.forward;
-        Vector3 rightRayDirection = Quaternion.AngleAxis(halfFOV, Vector3.up) * transform.forward;
+        GizmoBoidGroupSettings(boidGroups[previewGroupI]);        
+    }
+
+    void GizmoBoidGroupSettings(BoidGroup previewGroup)
+    {
+        Vector3 previewPos = (cameraEntityTarget.targetEntity == Entity.Null) ? transform.position :
+            (Vector3)entityManager.GetComponentData<Translation>(cameraEntityTarget.targetEntity).Value;
+
+        Vector3 previewForward = (cameraEntityTarget.targetEntity == Entity.Null) ? transform.forward :
+            (Vector3)math.forward(entityManager.GetComponentData<Rotation>(cameraEntityTarget.targetEntity).Value);
+
+        Vector3 previewUp = (cameraEntityTarget.targetEntity == Entity.Null) ? transform.up :
+            (Vector3)math.rotate(entityManager.GetComponentData<Rotation>(cameraEntityTarget.targetEntity).Value, math.up());
 
         Gizmos.color = Color.red;
-        Gizmos.DrawRay(transform.position, transform.forward * boidGroup.settings.ViewDst);
-        Gizmos.DrawRay(transform.position, leftRayDirection * boidGroup.settings.ViewDst);
-        Gizmos.DrawRay(transform.position, rightRayDirection * boidGroup.settings.ViewDst);
+        Gizmos.DrawWireSphere(previewPos, previewGroup.settings.BoidDetectRadius);
+
+        float halfFOV = previewGroup.settings.BoidDetectFOV * 0.5f;
+        Vector3 leftRayDirection = Quaternion.AngleAxis(-halfFOV, previewUp) * previewForward;
+        Vector3 rightRayDirection = Quaternion.AngleAxis(halfFOV, previewUp) * previewForward;
+
+        Gizmos.DrawRay(previewPos, previewForward * previewGroup.settings.BoidDetectRadius);
+        Gizmos.DrawRay(previewPos, leftRayDirection * previewGroup.settings.BoidDetectRadius);
+        Gizmos.DrawRay(previewPos, rightRayDirection * previewGroup.settings.BoidDetectRadius);
+
+        halfFOV = previewGroup.settings.FiringFOV * 0.5f;
+        leftRayDirection = Quaternion.AngleAxis(-halfFOV, previewUp) * previewForward;
+        rightRayDirection = Quaternion.AngleAxis(halfFOV, previewUp) * previewForward;
+
+        Gizmos.color = Color.green;
+        Gizmos.DrawRay(previewPos, leftRayDirection * previewGroup.settings.ObstacleViewDst);
+        Gizmos.DrawRay(previewPos, rightRayDirection * previewGroup.settings.ObstacleViewDst);
     }
 }

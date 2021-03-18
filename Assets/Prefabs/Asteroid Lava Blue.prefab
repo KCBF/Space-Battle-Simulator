@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &2976534488348221673
+--- !u!1 &7921242236347662474
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,62 +8,62 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 2973602080696220369}
-  - component: {fileID: 6620061570060352538}
-  - component: {fileID: 2971912784334285975}
-  - component: {fileID: 2963262215759021915}
-  - component: {fileID: 5844995767979910150}
-  - component: {fileID: 4204322699763822561}
-  - component: {fileID: 239940385389360293}
+  - component: {fileID: 7925882091210312758}
+  - component: {fileID: 3735808442662335798}
+  - component: {fileID: 7897543780535853746}
+  - component: {fileID: 7907674480568023996}
+  - component: {fileID: 7081361088705662092}
+  - component: {fileID: 5051435568074403127}
   m_Layer: 0
-  m_Name: Space Ship 1
+  m_Name: Asteroid Lava Blue
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &2973602080696220369
+--- !u!4 &7925882091210312758
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2976534488348221673}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_GameObject: {fileID: 7921242236347662474}
+  m_LocalRotation: {x: 0.000000021855694, y: -0.00000008742278, z: 1.9106855e-15,
+    w: 1}
+  m_LocalPosition: {x: 350.1026, y: 496.92493, z: -25.331985}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6620061570060352538
+--- !u!114 &3735808442662335798
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2976534488348221673}
+  m_GameObject: {fileID: 7921242236347662474}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ea7d7495833204790ba1d3a8755397f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   ConversionMode: 0
---- !u!33 &2971912784334285975
+--- !u!33 &7897543780535853746
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2976534488348221673}
-  m_Mesh: {fileID: 4300008, guid: e0f90ad78680d6145b082ac69f7fc504, type: 3}
---- !u!23 &2963262215759021915
+  m_GameObject: {fileID: 7921242236347662474}
+  m_Mesh: {fileID: 4300000, guid: 4514a249f7ca7d44b8eb4cbd48174504, type: 3}
+--- !u!23 &7907674480568023996
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2976534488348221673}
+  m_GameObject: {fileID: 7921242236347662474}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -75,7 +75,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 3574d5733ac60b941b175932e0a1aa2e, type: 2}
+  - {fileID: 2100000, guid: e1cac9f87fda27445ac6a54ade344d63, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -96,36 +96,13 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
---- !u!114 &5844995767979910150
+--- !u!114 &7081361088705662092
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2976534488348221673}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 473ae9a0ac3034c40a75c904dbcf1295, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  GroupID: 1
-  SettingsEntity: {fileID: 5094442950474819378, guid: 34f2d6c320657f348a31fc816002a26c,
-    type: 3}
-  moveForce:
-    x: 0
-    y: 0
-    z: 0
-  targetUp:
-    x: 0
-    y: 0
-    z: 0
---- !u!114 &4204322699763822561
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2976534488348221673}
+  m_GameObject: {fileID: 7921242236347662474}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ccea9ea98e38942e0b0938c27ed1903e, type: 3}
@@ -168,27 +145,27 @@ MonoBehaviour:
     Tag05: 0
     Tag06: 0
     Tag07: 0
---- !u!114 &239940385389360293
+--- !u!114 &5051435568074403127
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2976534488348221673}
+  m_GameObject: {fileID: 7921242236347662474}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b275e5f92732148048d7b77e264ac30e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_ShapeType: 2
+  m_ShapeType: 1
   m_PrimitiveCenter:
-    x: 0.00000047683716
-    y: -0.000000834465
-    z: 0.00000047683716
+    x: 0.00000023841858
+    y: -0.00000023841858
+    z: -0.0000023841858
   m_PrimitiveSize:
-    x: 13.638826
-    y: 13.638826
-    z: 13.638826
+    x: 4.3323803
+    y: 4.3323803
+    z: 5.137248
   m_PrimitiveOrientation:
     Value:
       x: -0
@@ -196,18 +173,18 @@ MonoBehaviour:
       z: 0
     RotationOrder: 4
   m_Capsule:
-    Height: 13.638826
-    Radius: 6.819413
+    Height: 5.137248
+    Radius: 2.1661901
     Axis: 2
   m_Cylinder:
-    Height: 13.638826
-    Radius: 6.819413
+    Height: 5.137248
+    Radius: 2.1661901
     Axis: 2
   m_CylinderSideCount: 20
-  m_SphereRadius: 6.819413
+  m_SphereRadius: 2.568624
   m_MinimumSkinnedVertexWeight: 0.1
   m_ConvexHullGenerationParameters:
-    m_SimplificationTolerance: 0.20458238
+    m_SimplificationTolerance: 0.077058725
     m_BevelRadius: 0.05
     m_MinimumAngle: 2.5000002
   m_CustomMesh: {fileID: 0}
@@ -231,8 +208,8 @@ MonoBehaviour:
     m_BelongsToCategories:
       m_Override: 0
       m_Value:
-        Category00: 1
-        Category01: 0
+        Category00: 0
+        Category01: 1
         Category02: 0
         Category03: 0
         Category04: 0
