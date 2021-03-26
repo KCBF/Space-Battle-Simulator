@@ -53,8 +53,8 @@ public class BoidsSystem : ComponentSystem
 
                 float3 forwardForce = forward * settings.MoveSpeed;
 
-                boid.moveForce = moveForce + forwardForce;
-                boid.targetUp = up;
+                boid.MoveForce = moveForce + forwardForce;
+                boid.TargetUp = up;
             });
 
         Entities
@@ -66,13 +66,13 @@ public class BoidsSystem : ComponentSystem
                     return;
                 BoidSettingsComponent settings = EntityManager.GetComponentData<BoidSettingsComponent>(boid.SettingsEntity);
 
-                velocity.Linear += boid.moveForce * Time.DeltaTime;
+                velocity.Linear += boid.MoveForce * Time.DeltaTime;
 
                 float clampedSpeed = math.min(math.length(velocity.Linear), settings.MaxMoveSpeed);
                 velocity.Linear = math.normalize(velocity.Linear) * clampedSpeed;
 
                 float3 lookDir = math.normalizesafe(velocity.Linear);
-                quaternion lookRot = quaternion.LookRotationSafe(lookDir, boid.targetUp);
+                quaternion lookRot = quaternion.LookRotationSafe(lookDir, boid.TargetUp);
                 rot.Value = math.slerp(rot.Value, lookRot, settings.LookSpeed * Time.DeltaTime);
             });
     }

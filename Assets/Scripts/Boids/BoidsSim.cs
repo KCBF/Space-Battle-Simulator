@@ -10,6 +10,7 @@ using Unity.Physics;
 [System.Serializable]
 public class BoidGroup
 {
+    public bool gizmo = true;
     public uint numToSpawn = 10;
     public float spawnRadius = 100.0f;
 
@@ -47,7 +48,6 @@ public class BoidGroup
 public class BoidsSim : MonoBehaviour
 {
     public BoidGroup[] boidGroups;
-    public int previewGroupI;
 
     public CameraEntityTarget cameraEntityTarget;
 
@@ -105,16 +105,20 @@ public class BoidsSim : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        previewGroupI = Mathf.Clamp(previewGroupI, 0, boidGroups.Length - 1);
-        if (boidGroups.Length == 0)
-            return;
-
-        GizmoBoidGroupSettings(boidGroups[previewGroupI]);        
+        for (int i = 0; i < boidGroups.Length; ++i)
+            GizmoBoidGroupSettings(i);        
     }
 
-    void GizmoBoidGroupSettings(BoidGroup previewGroup)
+    void GizmoBoidGroupSettings(int i)
     {
-        Vector3 previewPos = (cameraEntityTarget.targetEntity == Entity.Null) ? transform.position :
+        BoidGroup boidGroup = boidGroups[i];
+        if (!boidGroup.gizmo)
+            return;
+
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireCube(boidGroup.settings.MapCentre, new Vector3(boidGroup.settings.MapRadius, boidGroup.settings.MapRadius, boidGroup.settings.MapRadius));
+
+        Vector3 previewPos = (cameraEntityTarget.targetEntity == Entity.Null) ? (Vector3)boidGroup.settings.MapCentre :
             (Vector3)entityManager.GetComponentData<Translation>(cameraEntityTarget.targetEntity).Value;
 
         Vector3 previewForward = (cameraEntityTarget.targetEntity == Entity.Null) ? transform.forward :
@@ -124,22 +128,28 @@ public class BoidsSim : MonoBehaviour
             (Vector3)math.rotate(entityManager.GetComponentData<Rotation>(cameraEntityTarget.targetEntity).Value, math.up());
 
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(previewPos, previewGroup.settings.BoidDetectRadius);
 
-        float halfFOV = previewGroup.settings.BoidDetectFOV * 0.5f;
+        // Draw boid detection properties.
+        Gizmos.DrawWireSphere(previewPos, boidGroup.settings.BoidDetectRadius);
+
+        float halfFOV = boidGroup.settings.BoidDetectFOV * 0.5f;
         Vector3 leftRayDirection = Quaternion.AngleAxis(-halfFOV, previewUp) * previewForward;
         Vector3 rightRayDirection = Quaternion.AngleAxis(halfFOV, previewUp) * previewForward;
 
-        Gizmos.DrawRay(previewPos, previewForward * previewGroup.settings.BoidDetectRadius);
-        Gizmos.DrawRay(previewPos, leftRayDirection * previewGroup.settings.BoidDetectRadius);
-        Gizmos.DrawRay(previewPos, rightRayDirection * previewGroup.settings.BoidDetectRadius);
+        Gizmos.DrawRay(previewPos, leftRayDirection * boidGroup.settings.BoidDetectRadius);
+        Gizmos.DrawRay(previewPos, rightRayDirection * boidGroup.settings.BoidDetectRadius);
 
-        halfFOV = previewGroup.settings.FiringFOV * 0.5f;
+        // Draw obstacle detection properties.
+        Gizmos.color = Color.magenta;
+        Gizmos.DrawRay(previewPos, previewForward * boidGroup.settings.ObstacleViewDst);
+
+        // Draw obstacle detection properties.
+        halfFOV = boidGroup.settings.FiringFOV * 0.5f;
         leftRayDirection = Quaternion.AngleAxis(-halfFOV, previewUp) * previewForward;
         rightRayDirection = Quaternion.AngleAxis(halfFOV, previewUp) * previewForward;
 
         Gizmos.color = Color.green;
-        Gizmos.DrawRay(previewPos, leftRayDirection * previewGroup.settings.ObstacleViewDst);
-        Gizmos.DrawRay(previewPos, rightRayDirection * previewGroup.settings.ObstacleViewDst);
+        Gizmos.DrawRay(previewPos, leftRayDirection * boidGroup.settings.FiringViewDst);
+        Gizmos.DrawRay(previewPos, rightRayDirection * boidGroup.settings.FiringViewDst);
     }
 }

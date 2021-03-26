@@ -5,7 +5,9 @@ using Unity.Mathematics;
 public struct BoidComponent : IComponentData
 {
     public uint GroupID;
+    public float HP;
+
     public Entity SettingsEntity;
-    public float3 moveForce;
-    public float3 targetUp;
+    public float3 MoveForce;
+    public float3 TargetUp;
 }
