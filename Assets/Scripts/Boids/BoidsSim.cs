@@ -16,7 +16,11 @@ public class BoidGroup
 
     public GameObject spaceShip;
     public Entity spaceShipEntity;
-    public BlobAssetStore blobAssetStore;
+    public BlobAssetStore spaceShipBlobAssetStore;
+
+    public GameObject bullet;
+    public Entity bulletEntity;
+    public BlobAssetStore bulletBlobAssetStore;
 
     public Entity settingsEntity;
     public BoidSettingsComponent settings;
@@ -27,10 +31,12 @@ public class BoidGroup
         SetSettingsComponentData(entityManager);
 
         InitSpaceShipEntity();
+        InitBulletEntity();
     }
 
     public void SetSettingsComponentData(EntityManager entityManager)
     {
+        settings.BulletEntity = bulletEntity;
         entityManager.SetComponentData(settingsEntity, settings);
     }
 
@@ -39,9 +45,19 @@ public class BoidGroup
         if (spaceShip == null)
             return;
 
-        blobAssetStore = new BlobAssetStore();
-        var spaceShipEntitySettings = GameObjectConversionSettings.FromWorld(World.DefaultGameObjectInjectionWorld, blobAssetStore);
+        spaceShipBlobAssetStore = new BlobAssetStore();
+        var spaceShipEntitySettings = GameObjectConversionSettings.FromWorld(World.DefaultGameObjectInjectionWorld, spaceShipBlobAssetStore);
         spaceShipEntity = GameObjectConversionUtility.ConvertGameObjectHierarchy(spaceShip, spaceShipEntitySettings);
+    }
+
+    void InitBulletEntity()
+    {
+        if (bullet == null)
+            return;
+
+        bulletBlobAssetStore = new BlobAssetStore();
+        var bulletEntitySettings = GameObjectConversionSettings.FromWorld(World.DefaultGameObjectInjectionWorld, bulletBlobAssetStore);
+        bulletEntity = GameObjectConversionUtility.ConvertGameObjectHierarchy(bullet, bulletEntitySettings);
     }
 }
 
@@ -51,6 +67,12 @@ public class BoidsSim : MonoBehaviour
 
     public CameraEntityTarget cameraEntityTarget;
 
+    public GameObject[] asteroidEntities;
+    BlobAssetStore[] asteroidBlobAssetStores;
+    public float asteroidInnerSpaceRadius;
+    public float asteroidOuterSpaceRadius;
+    public int numAsteroidsToSpawn;
+    
     EntityManager entityManager;
     Unity.Mathematics.Random random;
 
@@ -63,6 +85,31 @@ public class BoidsSim : MonoBehaviour
         {
             boidGroup.Init(entityManager);
             SpawnBoids(boidGroup.numToSpawn, boidGroup);
+        }
+
+        SpawnAsteroids();
+    }
+
+    public void SpawnAsteroids()
+    {
+        asteroidBlobAssetStores = new BlobAssetStore[asteroidEntities.Length];
+        for (int j = 0; j < asteroidEntities.Length; ++j)
+        {
+            asteroidBlobAssetStores[j] = new BlobAssetStore();
+            var bulletEntitySettings = GameObjectConversionSettings.FromWorld(World.DefaultGameObjectInjectionWorld, asteroidBlobAssetStores[j]);
+            Entity asteroidEntity = GameObjectConversionUtility.ConvertGameObjectHierarchy(asteroidEntities[j], bulletEntitySettings);
+
+            for (int i = 0; i < numAsteroidsToSpawn; ++i)
+            {
+                float3 spawnDir = random.NextFloat3Direction();
+                
+                float3 spawnPos = spawnDir * random.NextFloat(asteroidInnerSpaceRadius, asteroidOuterSpaceRadius);
+                spawnPos += (float3)transform.position;
+                
+                Entity newAsteroidEntity = entityManager.Instantiate(asteroidEntity);
+                entityManager.SetComponentData(newAsteroidEntity, new Translation { Value = spawnPos });
+                entityManager.SetComponentData(newAsteroidEntity, new Rotation { Value = random.NextQuaternionRotation() });
+            }
         }
     }
 
@@ -85,7 +132,7 @@ public class BoidsSim : MonoBehaviour
             BoidComponent boid = entityManager.GetComponentData<BoidComponent>(entity);
             boid.SettingsEntity = boidGroup.settingsEntity;
             entityManager.SetComponentData(entity, boid);
-
+            
             if (i == 0)
                 cameraEntityTarget.targetEntity = entity;
         }
@@ -100,7 +147,19 @@ public class BoidsSim : MonoBehaviour
     private void OnDestroy()
     {
         foreach (BoidGroup boidGroup in boidGroups)
-            boidGroup.blobAssetStore.Dispose();
+        {
+            if (boidGroup.spaceShipBlobAssetStore != null)
+                boidGroup.spaceShipBlobAssetStore.Dispose();
+
+            if (boidGroup.bulletBlobAssetStore != null)
+                boidGroup.bulletBlobAssetStore.Dispose();
+        }
+
+        foreach (BlobAssetStore asteroidBlobAssetStore in asteroidBlobAssetStores)
+        {
+            if (asteroidBlobAssetStore != null)
+                asteroidBlobAssetStore.Dispose();
+        }
     }
 
     private void OnDrawGizmos()
@@ -116,7 +175,7 @@ public class BoidsSim : MonoBehaviour
             return;
 
         Gizmos.color = Color.yellow;
-        Gizmos.DrawWireCube(boidGroup.settings.MapCentre, new Vector3(boidGroup.settings.MapRadius, boidGroup.settings.MapRadius, boidGroup.settings.MapRadius));
+        Gizmos.DrawWireCube(boidGroup.settings.MapCentre, new Vector3(boidGroup.settings.MapRadius, boidGroup.settings.MapRadius, boidGroup.settings.MapRadius) * 2.0f);
 
         Vector3 previewPos = (cameraEntityTarget.targetEntity == Entity.Null) ? (Vector3)boidGroup.settings.MapCentre :
             (Vector3)entityManager.GetComponentData<Translation>(cameraEntityTarget.targetEntity).Value;

@@ -10,4 +10,8 @@ public struct BoidComponent : IComponentData
     public Entity SettingsEntity;
     public float3 MoveForce;
     public float3 TargetUp;
+
+    public float3 LineOfSightForce;
+
+    public float NextAllowShootTime;
 }

@@ -26,4 +26,8 @@ public struct BoidSettingsComponent : IComponentData
     public float3 MapCentre;
     public float MapRadius;
     public float MapRadiusWeight;
+
+    public Entity BulletEntity;
+    public float ShootRate;
+    public float3 ShootOffSet;
 }

@@ -6,7 +6,6 @@ using Unity.Transforms;
 public class CameraEntityTarget : MonoBehaviour
 {
     public Entity targetEntity;
-    public float3 offset;
 
     EntityManager entityManager;
 
@@ -21,7 +20,7 @@ public class CameraEntityTarget : MonoBehaviour
             return;
 
         Translation entityPos = entityManager.GetComponentData<Translation>(targetEntity);
-        transform.position = entityPos.Value + offset;
+        transform.position = entityPos.Value;
 
         Rotation entityRot = entityManager.GetComponentData<Rotation>(targetEntity);
         transform.rotation = entityRot.Value;

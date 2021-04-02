@@ -5,23 +5,26 @@ using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Physics.Extensions;
 using Unity.Collections;
-using UnityEngine;
 using Unity.Jobs;
 using Unity.Physics.Authoring;
 
-[UpdateAfter(typeof(Unity.Physics.Systems.EndFramePhysicsSystem))]
+[UpdateBefore(typeof(Unity.Physics.Systems.BuildPhysicsWorld))]
 public class ProjectileSystem : ComponentSystem
 {
     protected override void OnUpdate()
     {
-        //CapsulecastCommand.ScheduleBatch();
-
         Entities
             .ForEach((Entity entity,
-                ref Translation translation, ref Rotation rot,
+                ref Rotation rotation,
                 ref ProjectileComponent projectile, ref PhysicsVelocity velocity) =>
             {
-                velocity.Linear = math.forward(rot.Value) * projectile.Speed;
+                velocity.Linear = math.forward(rotation.Value) * projectile.Speed;
+                
+                if (projectile.DespawnTime == 0.0f)
+                    projectile.DespawnTime = (float)Time.ElapsedTime + projectile.LifeTime;
+
+                else if (projectile.DespawnTime <= Time.ElapsedTime)
+                    PostUpdateCommands.DestroyEntity(entity);
             });
     }
 }

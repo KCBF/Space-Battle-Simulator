@@ -30,7 +30,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2224964847766572744}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -73.29024, y: 140.58324, z: -102.89379}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -72,6 +72,7 @@ MeshRenderer:
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -96,6 +97,7 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
 --- !u!114 &7400530516533889575
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -109,15 +111,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   GroupID: 2
+  HP: 1
   SettingsEntity: {fileID: 0}
-  moveForce:
+  MoveForce:
     x: 0
     y: 0
     z: 0
-  targetUp:
+  TargetUp:
     x: 0
     y: 0
     z: 0
+  LineOfSightForce:
+    x: 0
+    y: 0
+    z: 0
+  NextAllowShootTime: 0
 --- !u!114 &1006183831174300096
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -133,7 +141,7 @@ MonoBehaviour:
   m_MotionType: 0
   m_Mass: 1
   m_LinearDamping: 0.01
-  m_AngularDamping: 0.05
+  m_AngularDamping: 0.95
   m_InitialLinearVelocity:
     x: 0
     y: 0

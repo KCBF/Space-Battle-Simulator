@@ -72,6 +72,7 @@ MeshRenderer:
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -96,6 +97,7 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
 --- !u!114 &5844995767979910150
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -109,16 +111,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   GroupID: 1
-  SettingsEntity: {fileID: 5094442950474819378, guid: 34f2d6c320657f348a31fc816002a26c,
-    type: 3}
-  moveForce:
+  HP: 1
+  SettingsEntity: {fileID: 0}
+  MoveForce:
     x: 0
     y: 0
     z: 0
-  targetUp:
+  TargetUp:
     x: 0
     y: 0
     z: 0
+  LineOfSightForce:
+    x: 0
+    y: 0
+    z: 0
+  NextAllowShootTime: 0
 --- !u!114 &4204322699763822561
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -134,7 +141,7 @@ MonoBehaviour:
   m_MotionType: 0
   m_Mass: 1
   m_LinearDamping: 0.01
-  m_AngularDamping: 0.05
+  m_AngularDamping: 0.95
   m_InitialLinearVelocity:
     x: 0
     y: 0
