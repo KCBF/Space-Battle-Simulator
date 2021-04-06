@@ -1,5 +1,6 @@
 ﻿using Unity.Entities;
 using Unity.Mathematics;
+using UnityEngine;
 
 [System.Serializable]
 [GenerateAuthoringComponent]
@@ -27,7 +28,7 @@ public struct BoidSettingsComponent : IComponentData
     public float MapRadius;
     public float MapRadiusWeight;
 
-    public Entity BulletEntity;
+    public Entity MissleEntity;
     public float ShootRate;
     public float3 ShootOffSet;
 }

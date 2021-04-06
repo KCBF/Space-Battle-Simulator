@@ -201,7 +201,11 @@ MonoBehaviour:
     spawnRadius: 100
     spaceShip: {fileID: 2976534488348221673, guid: caaf80c29b09fc64081951f5b51ee16d,
       type: 3}
-    bullet: {fileID: 4332712632107074478, guid: 0d95100c9bc12094194a0f8e67405d0f,
+    boidTrailParticleSystem: {fileID: 5749892945899594868, guid: 797ee248261f4504f9071cdf2c4300d4,
+      type: 3}
+    boidDestroyedParticleSystem: {fileID: 5585671604984661011, guid: c8024b1c8dba5ac45ac354c95aaf3221,
+      type: 3}
+    missle: {fileID: 4332712632107074478, guid: 0d95100c9bc12094194a0f8e67405d0f,
       type: 3}
     settings:
       MoveSpeed: 10
@@ -226,14 +230,17 @@ MonoBehaviour:
       ShootRate: 5
       ShootOffSet:
         x: 0
-        y: -2
+        y: -3
         z: 5
   - gizmo: 1
     numToSpawn: 15
     spawnRadius: 100
     spaceShip: {fileID: 2224964847766572744, guid: a2eb9e90950e3e44abecdd0b0a7b7d99,
       type: 3}
-    bullet: {fileID: 4332712632107074478, guid: 0d95100c9bc12094194a0f8e67405d0f,
+    boidTrailParticleSystem: {fileID: 5749892945899594868, guid: 797ee248261f4504f9071cdf2c4300d4,
+      type: 3}
+    boidDestroyedParticleSystem: {fileID: 0}
+    missle: {fileID: 4332712632107074478, guid: 0d95100c9bc12094194a0f8e67405d0f,
       type: 3}
     settings:
       MoveSpeed: 10
@@ -258,10 +265,11 @@ MonoBehaviour:
       ShootRate: 5
       ShootOffSet:
         x: 0
-        y: -2
+        y: -3
         z: 1
   cameraEntityTarget: {fileID: 406100290}
   asteroidEntities:
+  - {fileID: 7921242236347662474, guid: 092e71162c5214a42b4ef1ef8154a0ce, type: 3}
   - {fileID: 7921242236347662474, guid: 092e71162c5214a42b4ef1ef8154a0ce, type: 3}
   asteroidInnerSpaceRadius: 100
   asteroidOuterSpaceRadius: 500

@@ -17,10 +17,12 @@ public class BoidGroup
     public GameObject spaceShip;
     public Entity spaceShipEntity;
     public BlobAssetStore spaceShipBlobAssetStore;
+    public ParticleSystem boidTrailParticleSystem;
+    public ParticleSystem boidDestroyedParticleSystem;
 
-    public GameObject bullet;
-    public Entity bulletEntity;
-    public BlobAssetStore bulletBlobAssetStore;
+    public GameObject missle;
+    public Entity missleEntity;
+    public BlobAssetStore missleBlobAssetStore;
 
     public Entity settingsEntity;
     public BoidSettingsComponent settings;
@@ -31,12 +33,12 @@ public class BoidGroup
         SetSettingsComponentData(entityManager);
 
         InitSpaceShipEntity();
-        InitBulletEntity();
+        InitMissleEntity();
     }
 
     public void SetSettingsComponentData(EntityManager entityManager)
     {
-        settings.BulletEntity = bulletEntity;
+        settings.MissleEntity = missleEntity;
         entityManager.SetComponentData(settingsEntity, settings);
     }
 
@@ -50,14 +52,14 @@ public class BoidGroup
         spaceShipEntity = GameObjectConversionUtility.ConvertGameObjectHierarchy(spaceShip, spaceShipEntitySettings);
     }
 
-    void InitBulletEntity()
+    void InitMissleEntity()
     {
-        if (bullet == null)
+        if (missle == null)
             return;
 
-        bulletBlobAssetStore = new BlobAssetStore();
-        var bulletEntitySettings = GameObjectConversionSettings.FromWorld(World.DefaultGameObjectInjectionWorld, bulletBlobAssetStore);
-        bulletEntity = GameObjectConversionUtility.ConvertGameObjectHierarchy(bullet, bulletEntitySettings);
+        missleBlobAssetStore = new BlobAssetStore();
+        var missleEntitySettings = GameObjectConversionSettings.FromWorld(World.DefaultGameObjectInjectionWorld, missleBlobAssetStore);
+        missleEntity = GameObjectConversionUtility.ConvertGameObjectHierarchy(missle, missleEntitySettings);
     }
 }
 
@@ -96,8 +98,8 @@ public class BoidsSim : MonoBehaviour
         for (int j = 0; j < asteroidEntities.Length; ++j)
         {
             asteroidBlobAssetStores[j] = new BlobAssetStore();
-            var bulletEntitySettings = GameObjectConversionSettings.FromWorld(World.DefaultGameObjectInjectionWorld, asteroidBlobAssetStores[j]);
-            Entity asteroidEntity = GameObjectConversionUtility.ConvertGameObjectHierarchy(asteroidEntities[j], bulletEntitySettings);
+            var missleEntitySettings = GameObjectConversionSettings.FromWorld(World.DefaultGameObjectInjectionWorld, asteroidBlobAssetStores[j]);
+            Entity asteroidEntity = GameObjectConversionUtility.ConvertGameObjectHierarchy(asteroidEntities[j], missleEntitySettings);
 
             for (int i = 0; i < numAsteroidsToSpawn; ++i)
             {
@@ -135,6 +137,18 @@ public class BoidsSim : MonoBehaviour
             
             if (i == 0)
                 cameraEntityTarget.targetEntity = entity;
+
+            if (boidGroup.boidTrailParticleSystem != null)
+            {
+                ParticleSystem trailParticleSystem = Instantiate(boidGroup.boidTrailParticleSystem);
+                entityManager.AddComponentObject(entity, trailParticleSystem);
+            }
+
+            if (boidGroup.boidDestroyedParticleSystem != null)
+            {
+                ParticleSystem boidDestroyedParticleSystem = Instantiate(boidGroup.boidDestroyedParticleSystem);
+                entityManager.AddComponentObject(entity, boidDestroyedParticleSystem);
+            }
         }
     }
 
@@ -151,8 +165,8 @@ public class BoidsSim : MonoBehaviour
             if (boidGroup.spaceShipBlobAssetStore != null)
                 boidGroup.spaceShipBlobAssetStore.Dispose();
 
-            if (boidGroup.bulletBlobAssetStore != null)
-                boidGroup.bulletBlobAssetStore.Dispose();
+            if (boidGroup.missleBlobAssetStore != null)
+                boidGroup.missleBlobAssetStore.Dispose();
         }
 
         foreach (BlobAssetStore asteroidBlobAssetStore in asteroidBlobAssetStores)

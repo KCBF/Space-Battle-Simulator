@@ -29,6 +29,7 @@ public class ProjectileCollisionSystem : JobComponentSystem
         public ComponentDataFromEntity<BoidComponent> boidGroup;
 
         public EntityCommandBuffer entityCommandBuffer;
+        public float ElapsedTime;
 
         void OnProjectileBoidCollisionEvent(Entity boidEntity, Entity projectileEntity)
         {
@@ -40,7 +41,9 @@ public class ProjectileCollisionSystem : JobComponentSystem
             
             boid.HP -= projectile.Damage;
             boidGroup[boidEntity] = boid;
-            entityCommandBuffer.DestroyEntity(projectileEntity);
+
+            projectile.DespawnTime = ElapsedTime;
+            projectileGroup[projectileEntity] = projectile;
         }
 
         public void Execute(CollisionEvent collisionEvent)
@@ -66,6 +69,7 @@ public class ProjectileCollisionSystem : JobComponentSystem
         ProjectileCollisionSystemJob job = new ProjectileCollisionSystemJob();
         job.projectileGroup = GetComponentDataFromEntity<ProjectileComponent>(false);
         job.boidGroup = GetComponentDataFromEntity<BoidComponent>(false);
+        job.ElapsedTime = (float)Time.ElapsedTime;
 
         job.entityCommandBuffer = commandBufferSystem.CreateCommandBuffer();
         JobHandle jobHandle = job.Schedule(stepPhysicsWorld.Simulation, ref buildPhysicsWorld.PhysicsWorld, inputDependencies);

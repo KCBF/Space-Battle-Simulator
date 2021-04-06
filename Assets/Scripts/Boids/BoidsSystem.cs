@@ -56,8 +56,6 @@ public class BoidsSystem : ComponentSystem
                 boid.MoveForce = moveForce + forwardForce;
                 boid.TargetUp = up;
                 boid.LineOfSightForce = lineOfSightForce;
-                boid.pos = translation.Value;
-                Debug.DrawLine(translation.Value, translation.Value + forward * 10.0f, Color.yellow);
             });
 
         Entities
@@ -65,7 +63,22 @@ public class BoidsSystem : ComponentSystem
                 ref Translation translation, ref Rotation rot,
                 ref PhysicsVelocity velocity, ref BoidComponent boid) =>
             {
-                if (boid.HP <= 0.0f || boid.SettingsEntity == Entity.Null)
+                ParticleSystem particleSystem = null;
+                if (EntityManager.HasComponent<ParticleSystem>(entity))
+                {
+                    particleSystem = EntityManager.GetComponentObject<ParticleSystem>(entity);
+                    particleSystem.transform.position = translation.Value + math.rotate(rot.Value, boid.TrailOffset);
+                    particleSystem.transform.rotation = rot.Value;
+                }
+                
+                if (boid.HP <= 0.0f)
+                {
+                    if (particleSystem != null)
+                        particleSystem.Stop();
+                    return;
+                }
+
+                if (boid.SettingsEntity == Entity.Null)
                     return;
                 BoidSettingsComponent settings = EntityManager.GetComponentData<BoidSettingsComponent>(boid.SettingsEntity);
 
@@ -138,9 +151,8 @@ public class BoidsSystem : ComponentSystem
         
         if (targetEntity == Entity.Null)
             return;
-        Debug.DrawLine(boidPos, boidPos + boidForward * 10.0f, Color.cyan);
 
-        Entity projectileEntity = EntityManager.Instantiate(settings.BulletEntity);
+        Entity projectileEntity = EntityManager.Instantiate(settings.MissleEntity);
         ProjectileComponent projectile = EntityManager.GetComponentData<ProjectileComponent>(projectileEntity);
         projectile.OwnerEntity = entity;
         EntityManager.SetComponentData(projectileEntity, projectile);
@@ -156,13 +168,6 @@ public class BoidsSystem : ComponentSystem
         EntityManager.SetComponentData(projectileEntity, new Translation { Value = spawnPos });
 
         boid.NextAllowShootTime = (float)Time.ElapsedTime + settings.ShootRate;
-
-        Debug.DrawLine(spawnPos, spawnPos + lookDir * 10.0f, Color.red);
-        
-        Debug.DrawLine(boidPos, targetPos, Color.white);
-        Debug.DrawLine(boidPos, boidPos + lookDir * 10.0f, Color.magenta);
-
-        // TODO target leading...
     }
 
     float3 GetMapConstraintForce(float3 entityPos, BoidSettingsComponent settings)

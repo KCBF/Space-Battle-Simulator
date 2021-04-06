@@ -1,5 +1,6 @@
 ﻿using Unity.Entities;
 using Unity.Mathematics;
+using UnityEngine;
 
 [GenerateAuthoringComponent]
 public struct BoidComponent : IComponentData
@@ -14,4 +15,5 @@ public struct BoidComponent : IComponentData
     public float3 LineOfSightForce;
 
     public float NextAllowShootTime;
+    public float3 TrailOffset;
 }

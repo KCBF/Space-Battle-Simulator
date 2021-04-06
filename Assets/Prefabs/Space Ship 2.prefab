@@ -126,6 +126,10 @@ MonoBehaviour:
     y: 0
     z: 0
   NextAllowShootTime: 0
+  TrailOffset:
+    x: 0
+    y: 0
+    z: -7
 --- !u!114 &1006183831174300096
 MonoBehaviour:
   m_ObjectHideFlags: 0
