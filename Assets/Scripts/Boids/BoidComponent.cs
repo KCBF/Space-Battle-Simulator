@@ -15,5 +15,7 @@ public struct BoidComponent : IComponentData
     public float3 LineOfSightForce;
 
     public float NextAllowShootTime;
-    public float3 TrailOffset;
+
+    public static uint TrailParticleIdx = 0;
+    public static uint DeathParticleIdx = 1;
 }

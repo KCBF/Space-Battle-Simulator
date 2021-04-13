@@ -19,10 +19,7 @@ public class CameraEntityTarget : MonoBehaviour
         if (targetEntity == Entity.Null)
             return;
 
-        Translation entityPos = entityManager.GetComponentData<Translation>(targetEntity);
-        transform.position = entityPos.Value;
-
-        Rotation entityRot = entityManager.GetComponentData<Rotation>(targetEntity);
-        transform.rotation = entityRot.Value;
+        transform.position = entityManager.GetComponentData<Translation>(targetEntity).Value;
+        transform.rotation = entityManager.GetComponentData<Rotation>(targetEntity).Value;
     }
 }

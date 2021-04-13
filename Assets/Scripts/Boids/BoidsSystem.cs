@@ -63,22 +63,9 @@ public class BoidsSystem : ComponentSystem
                 ref Translation translation, ref Rotation rot,
                 ref PhysicsVelocity velocity, ref BoidComponent boid) =>
             {
-                ParticleSystem particleSystem = null;
-                if (EntityManager.HasComponent<ParticleSystem>(entity))
-                {
-                    particleSystem = EntityManager.GetComponentObject<ParticleSystem>(entity);
-                    particleSystem.transform.position = translation.Value + math.rotate(rot.Value, boid.TrailOffset);
-                    particleSystem.transform.rotation = rot.Value;
-                }
-                
-                if (boid.HP <= 0.0f)
-                {
-                    if (particleSystem != null)
-                        particleSystem.Stop();
-                    return;
-                }
+                DoBoidParticleEffects(entity, translation, rot, boid);
 
-                if (boid.SettingsEntity == Entity.Null)
+                if (boid.HP <= 0.0f || boid.SettingsEntity == Entity.Null)
                     return;
                 BoidSettingsComponent settings = EntityManager.GetComponentData<BoidSettingsComponent>(boid.SettingsEntity);
 
@@ -96,12 +83,41 @@ public class BoidsSystem : ComponentSystem
             });
     }
 
+    void DoBoidParticleEffects(Entity entity, Translation translation, Rotation rot, BoidComponent boid)
+    {
+        EntityParticleManager particleManager = null;
+        if (!EntityManager.HasComponent<EntityParticleManager>(entity))
+            return;
+
+        particleManager = EntityManager.GetComponentObject<EntityParticleManager>(entity);
+        if (particleManager == null)
+            return;
+
+        particleManager.transform.position = translation.Value;
+        particleManager.transform.rotation = rot.Value;
+        ParticleSystem[] particleSystems = particleManager.childParticleSystems;
+
+        if (boid.HP <= 0.0f)
+        {
+            particleSystems[BoidComponent.TrailParticleIdx].Stop(true);
+
+            if (!particleSystems[BoidComponent.DeathParticleIdx].isPlaying)
+            {
+                particleSystems[BoidComponent.DeathParticleIdx].Play(true);
+                MonoBehaviour.Destroy(particleManager, particleSystems[BoidComponent.DeathParticleIdx].main.duration);
+            }
+        }
+
+        else if (!particleSystems[BoidComponent.TrailParticleIdx].isPlaying)
+            particleSystems[BoidComponent.TrailParticleIdx].Play(true);
+    }
+
     public static float3 GetTargetLeadPos(float3 origin, float3 targetPos, float3 targetVelocity, float projectileSpeed, float corrector)
     {
         if (projectileSpeed == 0.0f || math.lengthsq(targetVelocity) <= 0.0f)
             return targetPos;
 
-        // The longer the distance the more the lead, the faster the intermediarySpeed the less the lead is.
+        // The longer the distance the more the lead, the faster the projectileSpeed the less the lead is.
         float deltaLen = math.distance(targetPos, origin);
         float scalar = deltaLen / projectileSpeed;
 
@@ -134,12 +150,12 @@ public class BoidsSystem : ComponentSystem
         foreach (int neighbourIdx in broadNeighbours)
         {
             RigidBody neighbourRigid = collisionWorld.Bodies[neighbourIdx];
-
+            
             if (!CanSeeBoidNeighbour(entity, boidPos, boidForward, boid, neighbourRigid, settings.FiringViewDst, settings.FiringFOV, false))
                 continue;
 
             RigidTransform neighbourTransform = neighbourRigid.WorldFromBody;
-            float deltaLen = math.lengthsq(targetPos - boidPos);
+            float deltaLen = math.lengthsq(neighbourTransform.pos - boidPos);
 
             if (deltaLen < closestDst)
             {
@@ -153,6 +169,7 @@ public class BoidsSystem : ComponentSystem
             return;
 
         Entity projectileEntity = EntityManager.Instantiate(settings.MissleEntity);
+
         ProjectileComponent projectile = EntityManager.GetComponentData<ProjectileComponent>(projectileEntity);
         projectile.OwnerEntity = entity;
         EntityManager.SetComponentData(projectileEntity, projectile);
@@ -204,7 +221,7 @@ public class BoidsSystem : ComponentSystem
 
         foreach (Unity.Physics.RaycastHit raycastHit in raycastHits)
         {
-            if (raycastHit.Entity == entity)
+            if (raycastHit.Entity == entity || EntityManager.HasComponent<ProjectileComponent>(raycastHit.Entity))
                 continue;
 
             if (EntityManager.HasComponent<BoidComponent>(raycastHit.Entity) && 

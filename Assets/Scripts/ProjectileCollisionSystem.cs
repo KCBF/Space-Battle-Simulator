@@ -13,14 +13,12 @@ public class ProjectileCollisionSystem : JobComponentSystem
 {
     BuildPhysicsWorld buildPhysicsWorld;
     StepPhysicsWorld stepPhysicsWorld;
-    EndSimulationEntityCommandBufferSystem commandBufferSystem;
 
     protected override void OnCreate()
     {
         base.OnCreate();
         buildPhysicsWorld = World.GetOrCreateSystem<BuildPhysicsWorld>();
         stepPhysicsWorld = World.GetOrCreateSystem<StepPhysicsWorld>();
-        commandBufferSystem = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
     }
 
     struct ProjectileCollisionSystemJob : ICollisionEventsJob
@@ -28,7 +26,6 @@ public class ProjectileCollisionSystem : JobComponentSystem
         public ComponentDataFromEntity<ProjectileComponent> projectileGroup;
         public ComponentDataFromEntity<BoidComponent> boidGroup;
 
-        public EntityCommandBuffer entityCommandBuffer;
         public float ElapsedTime;
 
         void OnProjectileBoidCollisionEvent(Entity boidEntity, Entity projectileEntity)
@@ -53,7 +50,7 @@ public class ProjectileCollisionSystem : JobComponentSystem
 
             bool entityAIsProjectile = projectileGroup.Exists(entityA);
             bool entityBIsProjectile = projectileGroup.Exists(entityB);
-
+            
             bool entityAIsBoid = boidGroup.Exists(entityA);
             bool entityBIsBoid = boidGroup.Exists(entityB);
 
@@ -70,11 +67,8 @@ public class ProjectileCollisionSystem : JobComponentSystem
         job.projectileGroup = GetComponentDataFromEntity<ProjectileComponent>(false);
         job.boidGroup = GetComponentDataFromEntity<BoidComponent>(false);
         job.ElapsedTime = (float)Time.ElapsedTime;
-
-        job.entityCommandBuffer = commandBufferSystem.CreateCommandBuffer();
+        
         JobHandle jobHandle = job.Schedule(stepPhysicsWorld.Simulation, ref buildPhysicsWorld.PhysicsWorld, inputDependencies);
-
-        commandBufferSystem.AddJobHandleForProducer(jobHandle);
         jobHandle.Complete();
         
         return jobHandle;

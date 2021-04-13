@@ -14,11 +14,10 @@ public class BoidGroup
     public uint numToSpawn = 10;
     public float spawnRadius = 100.0f;
 
-    public GameObject spaceShip;
-    public Entity spaceShipEntity;
-    public BlobAssetStore spaceShipBlobAssetStore;
-    public ParticleSystem boidTrailParticleSystem;
-    public ParticleSystem boidDestroyedParticleSystem;
+    public GameObject boidObj;
+    public Entity boidEntity;
+    public BlobAssetStore boidBlobAssetStore;
+    public EntityParticleManager particleManager;
 
     public GameObject missle;
     public Entity missleEntity;
@@ -44,12 +43,12 @@ public class BoidGroup
 
     void InitSpaceShipEntity()
     {
-        if (spaceShip == null)
+        if (boidObj == null)
             return;
 
-        spaceShipBlobAssetStore = new BlobAssetStore();
-        var spaceShipEntitySettings = GameObjectConversionSettings.FromWorld(World.DefaultGameObjectInjectionWorld, spaceShipBlobAssetStore);
-        spaceShipEntity = GameObjectConversionUtility.ConvertGameObjectHierarchy(spaceShip, spaceShipEntitySettings);
+        boidBlobAssetStore = new BlobAssetStore();
+        var spaceShipEntitySettings = GameObjectConversionSettings.FromWorld(World.DefaultGameObjectInjectionWorld, boidBlobAssetStore);
+        boidEntity = GameObjectConversionUtility.ConvertGameObjectHierarchy(boidObj, spaceShipEntitySettings);
     }
 
     void InitMissleEntity()
@@ -63,36 +62,16 @@ public class BoidGroup
     }
 }
 
-public class BoidsSim : MonoBehaviour
+[System.Serializable]
+public struct AsteroidSpawnData
 {
-    public BoidGroup[] boidGroups;
-
-    public CameraEntityTarget cameraEntityTarget;
-
     public GameObject[] asteroidEntities;
-    BlobAssetStore[] asteroidBlobAssetStores;
+    public BlobAssetStore[] asteroidBlobAssetStores;
     public float asteroidInnerSpaceRadius;
     public float asteroidOuterSpaceRadius;
     public int numAsteroidsToSpawn;
-    
-    EntityManager entityManager;
-    Unity.Mathematics.Random random;
 
-    void Start()
-    {
-        entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
-        random = new Unity.Mathematics.Random(5);
-
-        foreach (BoidGroup boidGroup in boidGroups)
-        {
-            boidGroup.Init(entityManager);
-            SpawnBoids(boidGroup.numToSpawn, boidGroup);
-        }
-
-        SpawnAsteroids();
-    }
-
-    public void SpawnAsteroids()
+    public void SpawnAsteroids(EntityManager entityManager, Unity.Mathematics.Random random)
     {
         asteroidBlobAssetStores = new BlobAssetStore[asteroidEntities.Length];
         for (int j = 0; j < asteroidEntities.Length; ++j)
@@ -104,22 +83,48 @@ public class BoidsSim : MonoBehaviour
             for (int i = 0; i < numAsteroidsToSpawn; ++i)
             {
                 float3 spawnDir = random.NextFloat3Direction();
-                
                 float3 spawnPos = spawnDir * random.NextFloat(asteroidInnerSpaceRadius, asteroidOuterSpaceRadius);
-                spawnPos += (float3)transform.position;
-                
+
                 Entity newAsteroidEntity = entityManager.Instantiate(asteroidEntity);
                 entityManager.SetComponentData(newAsteroidEntity, new Translation { Value = spawnPos });
                 entityManager.SetComponentData(newAsteroidEntity, new Rotation { Value = random.NextQuaternionRotation() });
             }
         }
     }
+}
+
+public class BoidsSim : MonoBehaviour
+{
+    public BoidGroup[] boidGroups;
+
+    public CameraEntityTarget cameraEntityTarget;
+
+    public AsteroidSpawnData asteroids;
+
+    EntityManager entityManager;
+
+    public static uint Seed = 5;
+    Unity.Mathematics.Random random;
+
+    void Start()
+    {
+        entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+        random = new Unity.Mathematics.Random(Seed);
+
+        foreach (BoidGroup boidGroup in boidGroups)
+        {
+            boidGroup.Init(entityManager);
+            SpawnBoids(boidGroup.numToSpawn, boidGroup);
+        }
+
+        asteroids.SpawnAsteroids(entityManager, random);
+    }
 
     public void SpawnBoids(uint num, BoidGroup boidGroup)
     {
         for (uint i = 0; i < num; ++i)
         {
-            Entity entity = entityManager.Instantiate(boidGroup.spaceShipEntity);
+            Entity entity = entityManager.Instantiate(boidGroup.boidEntity);
 
             float3 spawnPos = random.NextFloat3Direction() * boidGroup.spawnRadius;
             spawnPos += boidGroup.settings.MapCentre;
@@ -135,19 +140,10 @@ public class BoidsSim : MonoBehaviour
             boid.SettingsEntity = boidGroup.settingsEntity;
             entityManager.SetComponentData(entity, boid);
             
-            if (i == 0)
-                cameraEntityTarget.targetEntity = entity;
-
-            if (boidGroup.boidTrailParticleSystem != null)
+            if (boidGroup.particleManager != null)
             {
-                ParticleSystem trailParticleSystem = Instantiate(boidGroup.boidTrailParticleSystem);
-                entityManager.AddComponentObject(entity, trailParticleSystem);
-            }
-
-            if (boidGroup.boidDestroyedParticleSystem != null)
-            {
-                ParticleSystem boidDestroyedParticleSystem = Instantiate(boidGroup.boidDestroyedParticleSystem);
-                entityManager.AddComponentObject(entity, boidDestroyedParticleSystem);
+                EntityParticleManager particleManager = Instantiate(boidGroup.particleManager);
+                entityManager.AddComponentObject(entity, particleManager);
             }
         }
     }
@@ -156,20 +152,30 @@ public class BoidsSim : MonoBehaviour
     {
         foreach (BoidGroup boidGroup in boidGroups)
             boidGroup.SetSettingsComponentData(entityManager);
+
+        if (Input.GetKeyDown(KeyCode.C))
+            --Seed;
+        else if (Input.GetKeyDown(KeyCode.V))
+            ++Seed;
+
+        BoidControllerComponent boidControllerComponent = World.DefaultGameObjectInjectionWorld.
+            GetExistingSystem(typeof(BoidUserControllerSystem))
+            .GetSingleton<BoidControllerComponent>();
+        cameraEntityTarget.targetEntity = boidControllerComponent.BoidEntity;
     }
 
     private void OnDestroy()
     {
         foreach (BoidGroup boidGroup in boidGroups)
         {
-            if (boidGroup.spaceShipBlobAssetStore != null)
-                boidGroup.spaceShipBlobAssetStore.Dispose();
+            if (boidGroup.boidBlobAssetStore != null)
+                boidGroup.boidBlobAssetStore.Dispose();
 
             if (boidGroup.missleBlobAssetStore != null)
                 boidGroup.missleBlobAssetStore.Dispose();
         }
 
-        foreach (BlobAssetStore asteroidBlobAssetStore in asteroidBlobAssetStores)
+        foreach (BlobAssetStore asteroidBlobAssetStore in asteroids.asteroidBlobAssetStores)
         {
             if (asteroidBlobAssetStore != null)
                 asteroidBlobAssetStore.Dispose();

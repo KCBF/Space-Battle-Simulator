@@ -25,9 +25,7 @@ public class ProjectileSystem : ComponentSystem
                     projectile.DespawnTime = (float)Time.ElapsedTime + projectile.LifeTime;
                 
                 else if (projectile.DespawnTime <= Time.ElapsedTime)
-                {
                     PostUpdateCommands.DestroyEntity(entity);
-                }
             });
     }
 }
