@@ -175,7 +175,7 @@ public class BoidsSim : MonoBehaviour
             BoidUserControllerComponent boidControllerComponent = boidUserControllerSystem.GetSingleton<BoidUserControllerComponent>();
             cameraEntityTarget.targetEntity = boidControllerComponent.BoidEntity;
         }
-
+        
         if (Input.GetKeyDown(KeyCode.Return))
         {
             entityManager.DestroyEntity(entityManager.UniversalQuery);

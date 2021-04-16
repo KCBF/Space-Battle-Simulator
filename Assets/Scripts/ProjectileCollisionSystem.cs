@@ -25,6 +25,7 @@ public class ProjectileCollisionSystem : JobComponentSystem
     {
         public ComponentDataFromEntity<ProjectileComponent> projectileGroup;
         public ComponentDataFromEntity<BoidComponent> boidGroup;
+        public ComponentDataFromEntity<BoidStationComponent> boidStationGroup;
 
         public float ElapsedTime;
 
@@ -38,6 +39,15 @@ public class ProjectileCollisionSystem : JobComponentSystem
             
             boid.HP -= projectile.Damage;
             boidGroup[boidEntity] = boid;
+        }
+
+        void OnProjectileBoidStationCollisionEvent(Entity boidStationEntity, Entity projectileEntity)
+        {
+            ProjectileComponent projectile = projectileGroup[projectileEntity];
+            BoidStationComponent boidStation = boidStationGroup[boidStationEntity];
+
+            boidStation.HP -= projectile.Damage;
+            boidStationGroup[boidStationEntity] = boidStation;
         }
 
         void OnDeinitProjectile(Entity projectileEntity)
@@ -54,7 +64,29 @@ public class ProjectileCollisionSystem : JobComponentSystem
 
             bool entityAIsProjectile = projectileGroup.Exists(entityA);
             bool entityBIsProjectile = projectileGroup.Exists(entityB);
-            
+
+            SolveBoidVsProjectileCondition(entityA, entityB, entityAIsProjectile, entityBIsProjectile);
+            SolveBoidStationVsProjectileCondition(entityA, entityB, entityAIsProjectile, entityBIsProjectile);
+
+            if (entityAIsProjectile)
+                OnDeinitProjectile(entityA);
+            else if (entityBIsProjectile)
+                OnDeinitProjectile(entityB);
+        }
+
+        void SolveBoidStationVsProjectileCondition(Entity entityA, Entity entityB, bool entityAIsProjectile, bool entityBIsProjectile)
+        {
+            bool entityAIsBoidStation = boidStationGroup.Exists(entityA);
+            bool entityBIsBoidStation = boidStationGroup.Exists(entityB);
+
+            if (entityAIsProjectile && entityBIsBoidStation)
+                OnProjectileBoidStationCollisionEvent(entityB, entityA);
+            else if (entityAIsBoidStation && entityBIsProjectile)
+                OnProjectileBoidStationCollisionEvent(entityA, entityB);
+        }
+
+        void SolveBoidVsProjectileCondition(Entity entityA, Entity entityB, bool entityAIsProjectile, bool entityBIsProjectile)
+        {
             bool entityAIsBoid = boidGroup.Exists(entityA);
             bool entityBIsBoid = boidGroup.Exists(entityB);
 
@@ -62,11 +94,6 @@ public class ProjectileCollisionSystem : JobComponentSystem
                 OnProjectileBoidCollisionEvent(entityB, entityA);
             else if (entityAIsBoid && entityBIsProjectile)
                 OnProjectileBoidCollisionEvent(entityA, entityB);
-
-            if (entityAIsProjectile)
-                OnDeinitProjectile(entityA);
-            else if (entityBIsProjectile)
-                OnDeinitProjectile(entityB);
         }
     }
 
@@ -75,6 +102,7 @@ public class ProjectileCollisionSystem : JobComponentSystem
         ProjectileCollisionSystemJob job = new ProjectileCollisionSystemJob();
         job.projectileGroup = GetComponentDataFromEntity<ProjectileComponent>(false);
         job.boidGroup = GetComponentDataFromEntity<BoidComponent>(false);
+        job.boidStationGroup = GetComponentDataFromEntity<BoidStationComponent>(false);
         job.ElapsedTime = (float)Time.ElapsedTime;
         
         JobHandle jobHandle = job.Schedule(stepPhysicsWorld.Simulation, ref buildPhysicsWorld.PhysicsWorld, inputDependencies);

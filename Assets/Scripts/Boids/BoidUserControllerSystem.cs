@@ -170,7 +170,7 @@ public class BoidUserControllerSystem : ComponentSystem
             if (deltaLen < closestDst)
             {
                 targetEntity = neighbourRigid.Entity;
-                targetPos = neighbourTransform.pos;
+                targetPos = raycastHit.Position;
                 closestDst = deltaLen;
             }
         }

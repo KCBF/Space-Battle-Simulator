@@ -24,6 +24,16 @@ public class BoidsSystem : ComponentSystem
         random = new Unity.Mathematics.Random(1);
     }
 
+    bool IsValidBoid(BoidUserControllerComponent boidControllerComponent, Entity entity, in BoidComponent boid, out BoidSettingsComponent settings)
+    {
+        settings = new BoidSettingsComponent();
+        if (boid.HP <= 0.0f || boid.SettingsEntity == Entity.Null)
+            return false;
+
+        settings = EntityManager.GetComponentData<BoidSettingsComponent>(boid.SettingsEntity);
+        return true;
+    }
+
     protected override void OnUpdate()
     {
         var boidUserControllerSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystem<BoidUserControllerSystem>();
@@ -37,10 +47,11 @@ public class BoidsSystem : ComponentSystem
             ref Translation translation, ref Rotation rot,
             ref PhysicsVelocity velocity, ref BoidComponent boid) =>
         {
-            if (boid.HP <= 0.0f || boid.SettingsEntity == Entity.Null || entity == boidControllerComponent.BoidEntity)
+            BoidSettingsComponent settings;
+            if (!IsValidBoid(boidControllerComponent, entity, boid, out settings))
                 return;
-            
-            BoidSettingsComponent settings = EntityManager.GetComponentData<BoidSettingsComponent>(boid.SettingsEntity);
+            else if (boidControllerComponent.Manual && entity == boidControllerComponent.BoidEntity)
+                return;
 
             float3 forward = math.forward(rot.Value);
             float3 up = math.rotate(rot.Value, math.up());
@@ -69,9 +80,9 @@ public class BoidsSystem : ComponentSystem
         {
             DoBoidParticleEffects(entity, translation, rot, boid);
 
-            if (boid.HP <= 0.0f || boid.SettingsEntity == Entity.Null)
+            BoidSettingsComponent settings;
+            if (!IsValidBoid(boidControllerComponent, entity, boid, out settings))
                 return;
-            BoidSettingsComponent settings = EntityManager.GetComponentData<BoidSettingsComponent>(boid.SettingsEntity);
 
             velocity.Linear += boid.MoveForce * Time.DeltaTime;
             velocity.Linear += boid.LineOfSightForce * Time.DeltaTime;
@@ -156,8 +167,9 @@ public class BoidsSystem : ComponentSystem
         foreach (int neighbourIdx in broadNeighbours)
         {
             RigidBody neighbourRigid = collisionWorld.Bodies[neighbourIdx];
-            
-            if (!CanSeeBoidNeighbour(entity, boidPos, boidForward, boid, neighbourRigid, settings.FiringViewDst, settings.FiringFOV, false))
+
+            if (!CanSeeBoidNeighbour(entity, boidPos, boidForward, boid, neighbourRigid, settings.FiringViewDst, settings.FiringFOV, false) &&
+                !CanSeeEnemyBoidStation(entity, boidPos, boidForward, boid, neighbourRigid, settings.FiringViewDst, settings.FiringFOV))
                 continue;
 
             RigidTransform neighbourTransform = neighbourRigid.WorldFromBody;
@@ -256,9 +268,12 @@ public class BoidsSystem : ComponentSystem
             if (raycastHit.Entity == entity || EntityManager.HasComponent<ProjectileComponent>(raycastHit.Entity))
                 continue;
 
-            if (EntityManager.HasComponent<BoidComponent>(raycastHit.Entity) && 
-                math.length(raycastHit.Position - boidPos) <= settings.BoidDetectRadius)
-                continue;
+            if (EntityManager.HasComponent<BoidComponent>(raycastHit.Entity))
+            {
+                if (EntityManager.GetComponentData<BoidComponent>(raycastHit.Entity).GroupID != boid.GroupID &&
+                    math.length(raycastHit.Position - boidPos) >= settings.BoidDetectRadius)
+                    continue;
+            }
 
             raycastResult = raycastHit;
             break;
@@ -320,17 +335,27 @@ public class BoidsSystem : ComponentSystem
         return cohesionForce + alignmentForce + separationForce;
     }
 
+    bool CanSeeEnemyBoidStation(Entity entity, float3 boidPos, float3 boidForward, BoidComponent boid,
+        RigidBody neighbourRigid, float viewDst, float viewAngle)
+    {
+        if (neighbourRigid.Entity == entity || !EntityManager.HasComponent<BoidStationComponent>(neighbourRigid.Entity))
+            return false;
+
+        BoidStationComponent boidStation = EntityManager.GetComponentData<BoidStationComponent>(neighbourRigid.Entity);
+        if (boidStation.HP <= 0.0f || boidStation.GroupID == boid.GroupID)
+            return false;
+        
+        RigidTransform neighbourTransform = neighbourRigid.WorldFromBody;
+        return CanSeeNeighbour(boidPos, boidForward, neighbourTransform.pos, viewDst, viewAngle * 2.0f);
+    }
+
     bool CanSeeBoidNeighbour(Entity entity, float3 boidPos, float3 boidForward, BoidComponent boid,
         RigidBody neighbourRigid, float viewDst, float viewAngle, bool seeFriendly)
     {
-        if (neighbourRigid.Entity == entity)
-            return false;
-
-        if (!EntityManager.HasComponent<BoidComponent>(neighbourRigid.Entity))
+        if (neighbourRigid.Entity == entity || !EntityManager.HasComponent<BoidComponent>(neighbourRigid.Entity))
             return false;
         
         BoidComponent neighbourBoid = EntityManager.GetComponentData<BoidComponent>(neighbourRigid.Entity);
-
         if (neighbourBoid.HP <= 0.0f)
             return false;
 

@@ -12,6 +12,7 @@ public class BoidUIController : MonoBehaviour
     public Text maunalText;
     public Text missleCooldown;
     public Image crosshair;
+    public Text teamStatsText;
 
     EntityManager entityManager;
 
@@ -34,6 +35,31 @@ public class BoidUIController : MonoBehaviour
 
         crosshair.gameObject.SetActive(boidControllerComponent.Manual);
 
+        DrawTeamStatsText();
+        DrawBoidControllerBoidEntityData(boidControllerComponent);
+    }
+
+    void DrawTeamStatsText()
+    {
+        teamStatsText.enabled = Input.GetKey(KeyCode.R);
+        if (!teamStatsText.enabled)
+            return;
+
+        teamStatsText.text = "";
+        var boidTeamStatTrackerSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystem<BoidTeamStatTrackerSystem>();
+
+        for (int i = 1; i < boidTeamStatTrackerSystem.BoidTeamTotalCounts.Length; ++i)
+        {
+            teamStatsText.text += $"Team {i}: " +
+                $"{boidTeamStatTrackerSystem.BoidTeamAliveCounts[i]} / {boidTeamStatTrackerSystem.BoidTeamTotalCounts[i]}\n";
+
+            teamStatsText.text += $"Team Base HP: {i}" +
+                $"{boidTeamStatTrackerSystem.BoidBasesHPs[i]}\n";
+        }
+    }
+
+    void DrawBoidControllerBoidEntityData(in BoidUserControllerComponent boidControllerComponent)
+    {
         if (boidControllerComponent.Manual)
             crosshair.transform.position = Input.mousePosition;
 
