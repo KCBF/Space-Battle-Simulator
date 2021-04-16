@@ -38,7 +38,11 @@ public class ProjectileCollisionSystem : JobComponentSystem
             
             boid.HP -= projectile.Damage;
             boidGroup[boidEntity] = boid;
+        }
 
+        void OnDeinitProjectile(Entity projectileEntity)
+        {
+            ProjectileComponent projectile = projectileGroup[projectileEntity];
             projectile.DespawnTime = ElapsedTime;
             projectileGroup[projectileEntity] = projectile;
         }
@@ -58,6 +62,11 @@ public class ProjectileCollisionSystem : JobComponentSystem
                 OnProjectileBoidCollisionEvent(entityB, entityA);
             else if (entityAIsBoid && entityBIsProjectile)
                 OnProjectileBoidCollisionEvent(entityA, entityB);
+
+            if (entityAIsProjectile)
+                OnDeinitProjectile(entityA);
+            else if (entityBIsProjectile)
+                OnDeinitProjectile(entityB);
         }
     }
 

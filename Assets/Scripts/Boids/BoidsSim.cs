@@ -6,6 +6,7 @@ using Unity.Transforms;
 using Unity.Rendering;
 using Unity.Mathematics;
 using Unity.Physics;
+using UnityEngine.SceneManagement;
 
 [System.Serializable]
 public class BoidGroup
@@ -22,6 +23,7 @@ public class BoidGroup
     public GameObject missle;
     public Entity missleEntity;
     public BlobAssetStore missleBlobAssetStore;
+    public EntityParticleManager missleParticleManager;
 
     public Entity settingsEntity;
     public BoidSettingsComponent settings;
@@ -118,6 +120,13 @@ public class BoidsSim : MonoBehaviour
         }
 
         asteroids.SpawnAsteroids(entityManager, random);
+
+        ProjectileSystem projectileSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystem<ProjectileSystem>();
+        projectileSystem.ParticleManagers = new EntityParticleManager[boidGroups.Length];
+        for (uint i = 0; i < boidGroups.Length; ++i)
+        {
+            projectileSystem.ParticleManagers[i] = boidGroups[i].missleParticleManager;
+        }
     }
 
     public void SpawnBoids(uint num, BoidGroup boidGroup)
@@ -125,7 +134,12 @@ public class BoidsSim : MonoBehaviour
         for (uint i = 0; i < num; ++i)
         {
             Entity entity = entityManager.Instantiate(boidGroup.boidEntity);
-
+            if (boidGroup.particleManager != null)
+            {
+                EntityParticleManager particleManager = Instantiate(boidGroup.particleManager);
+                entityManager.AddComponentObject(entity, particleManager);
+            }
+            
             float3 spawnPos = random.NextFloat3Direction() * boidGroup.spawnRadius;
             spawnPos += boidGroup.settings.MapCentre;
             spawnPos.y = 0.0f;
@@ -139,12 +153,6 @@ public class BoidsSim : MonoBehaviour
             BoidComponent boid = entityManager.GetComponentData<BoidComponent>(entity);
             boid.SettingsEntity = boidGroup.settingsEntity;
             entityManager.SetComponentData(entity, boid);
-            
-            if (boidGroup.particleManager != null)
-            {
-                EntityParticleManager particleManager = Instantiate(boidGroup.particleManager);
-                entityManager.AddComponentObject(entity, particleManager);
-            }
         }
     }
 
@@ -152,16 +160,27 @@ public class BoidsSim : MonoBehaviour
     {
         foreach (BoidGroup boidGroup in boidGroups)
             boidGroup.SetSettingsComponentData(entityManager);
+    }
 
+    private void LateUpdate()
+    {
         if (Input.GetKeyDown(KeyCode.C))
             --Seed;
         else if (Input.GetKeyDown(KeyCode.V))
             ++Seed;
 
-        BoidControllerComponent boidControllerComponent = World.DefaultGameObjectInjectionWorld.
-            GetExistingSystem(typeof(BoidUserControllerSystem))
-            .GetSingleton<BoidControllerComponent>();
-        cameraEntityTarget.targetEntity = boidControllerComponent.BoidEntity;
+        var boidUserControllerSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystem<BoidUserControllerSystem>();
+        if (boidUserControllerSystem.HasSingleton<BoidUserControllerComponent>())
+        {
+            BoidUserControllerComponent boidControllerComponent = boidUserControllerSystem.GetSingleton<BoidUserControllerComponent>();
+            cameraEntityTarget.targetEntity = boidControllerComponent.BoidEntity;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Return))
+        {
+            entityManager.DestroyEntity(entityManager.UniversalQuery);
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        }
     }
 
     private void OnDestroy()

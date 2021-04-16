@@ -348,7 +348,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 5
+  m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &498017256
 GameObject:
@@ -390,6 +390,8 @@ MonoBehaviour:
       type: 3}
     missle: {fileID: 4332712632107074478, guid: 0d95100c9bc12094194a0f8e67405d0f,
       type: 3}
+    missleParticleManager: {fileID: 8229554418287175201, guid: 807434d3659878e48bbd03990d31a1f2,
+      type: 3}
     settings:
       MoveSpeed: 10
       MaxMoveSpeed: 30
@@ -423,6 +425,44 @@ MonoBehaviour:
     particleManager: {fileID: 5585135109410063199, guid: f0c3804ea9ff0b644bc49dff1832a27b,
       type: 3}
     missle: {fileID: 4332712632107074478, guid: 0d95100c9bc12094194a0f8e67405d0f,
+      type: 3}
+    missleParticleManager: {fileID: 8229554418287175201, guid: 807434d3659878e48bbd03990d31a1f2,
+      type: 3}
+    settings:
+      MoveSpeed: 10
+      MaxMoveSpeed: 30
+      LookSpeed: 3
+      BoidDetectRadius: 50
+      BoidDetectFOV: 210
+      CohesionWeight: 1
+      AlignmentWeight: 10
+      SeparationWeight: 30
+      ObstacleAvoidWeight: 30
+      ObstacleViewDst: 100
+      FiringViewDst: 145
+      FiringFOV: 80
+      LineOfSightWeight: 10
+      MapCentre:
+        x: -120
+        y: 0
+        z: 0
+      MapRadius: 202.09
+      MapRadiusWeight: 0.5
+      ShootRate: 3
+      ShootOffSet:
+        x: 0
+        y: -5
+        z: 8
+  - gizmo: 1
+    numToSpawn: 15
+    spawnRadius: 100
+    boidObj: {fileID: 633681575288219995, guid: 188bf7c1de1725e4fa332d18e5bd2785,
+      type: 3}
+    particleManager: {fileID: 5585135109410063199, guid: f0c3804ea9ff0b644bc49dff1832a27b,
+      type: 3}
+    missle: {fileID: 4332712632107074478, guid: 0d95100c9bc12094194a0f8e67405d0f,
+      type: 3}
+    missleParticleManager: {fileID: 8229554418287175201, guid: 807434d3659878e48bbd03990d31a1f2,
       type: 3}
     settings:
       MoveSpeed: 10
@@ -658,8 +698,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 210, y: 1314}
-  m_SizeDelta: {x: 400, y: 100}
+  m_AnchoredPosition: {x: 341.0406, y: 1335.4324}
+  m_SizeDelta: {x: 662.0812, y: 57.1353}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &837750778
 GameObject:
@@ -1528,7 +1568,7 @@ PrefabInstance:
     - target: {fileID: 2582839987311928145, guid: f2d4b538ba1c4c64ab79d34fcf4cf36f,
         type: 3}
       propertyPath: m_RootOrder
-      value: 6
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 2582839987311928145, guid: f2d4b538ba1c4c64ab79d34fcf4cf36f,
         type: 3}

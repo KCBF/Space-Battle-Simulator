@@ -26,85 +26,90 @@ public class BoidsSystem : ComponentSystem
 
     protected override void OnUpdate()
     {
+        var boidUserControllerSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystem<BoidUserControllerSystem>();
+        if (!boidUserControllerSystem.HasSingleton<BoidUserControllerComponent>())
+            return;
+
         collisionWorld = physicsWorldSystem.PhysicsWorld.CollisionWorld;
-        
-        Entities
-            .ForEach((Entity entity,
+        BoidUserControllerComponent boidControllerComponent = boidUserControllerSystem.GetSingleton<BoidUserControllerComponent>();
+
+        Entities.ForEach((Entity entity,
+            ref Translation translation, ref Rotation rot,
+            ref PhysicsVelocity velocity, ref BoidComponent boid) =>
+        {
+            if (boid.HP <= 0.0f || boid.SettingsEntity == Entity.Null || entity == boidControllerComponent.BoidEntity)
+                return;
+            
+            BoidSettingsComponent settings = EntityManager.GetComponentData<BoidSettingsComponent>(boid.SettingsEntity);
+
+            float3 forward = math.forward(rot.Value);
+            float3 up = math.rotate(rot.Value, math.up());
+
+            float3 moveForce = GetObstacleMoveForce(entity, translation.Value, forward, boid, settings);
+            float3 lineOfSightForce = float3.zero;
+
+            if (math.all(moveForce == float3.zero))
+            {
+                moveForce = GetBoidMoveForce(entity, translation.Value, forward, ref up, velocity.Linear, boid, settings);
+                moveForce += GetMapConstraintForce(translation.Value, settings);
+
+                lineOfSightForce = GetBoidLineOfSightForce(entity, translation.Value, forward, up, boid, settings);
+            }
+
+            float3 forwardForce = forward * settings.MoveSpeed;
+
+            boid.MoveForce = moveForce + forwardForce;
+            boid.TargetUp = up;
+            boid.LineOfSightForce = lineOfSightForce;
+        });
+
+        Entities.ForEach((Entity entity,
                 ref Translation translation, ref Rotation rot,
                 ref PhysicsVelocity velocity, ref BoidComponent boid) =>
-            {
-                if (boid.HP <= 0.0f || boid.SettingsEntity == Entity.Null)
-                    return;
-                BoidSettingsComponent settings = EntityManager.GetComponentData<BoidSettingsComponent>(boid.SettingsEntity);
+        {
+            DoBoidParticleEffects(entity, translation, rot, boid);
 
-                float3 forward = math.forward(rot.Value);
-                float3 up = math.rotate(rot.Value, math.up());
+            if (boid.HP <= 0.0f || boid.SettingsEntity == Entity.Null)
+                return;
+            BoidSettingsComponent settings = EntityManager.GetComponentData<BoidSettingsComponent>(boid.SettingsEntity);
 
-                float3 moveForce = GetObstacleMoveForce(entity, translation.Value, forward, boid, settings);
-                float3 lineOfSightForce = float3.zero;
+            velocity.Linear += boid.MoveForce * Time.DeltaTime;
+            velocity.Linear += boid.LineOfSightForce * Time.DeltaTime;
 
-                if (math.all(moveForce == float3.zero))
-                {
-                    moveForce = GetBoidMoveForce(entity, translation.Value, forward, ref up, velocity.Linear, boid, settings);
-                    moveForce += GetMapConstraintForce(translation.Value, settings);
+            float clampedSpeed = math.min(math.length(velocity.Linear), settings.MaxMoveSpeed);
+            velocity.Linear = math.normalize(velocity.Linear) * clampedSpeed;
 
-                    lineOfSightForce = GetBoidLineOfSightForce(entity, translation.Value, forward, up, boid, settings);
-                }
+            float3 lookDir = math.normalizesafe(velocity.Linear);
+            quaternion lookRot = quaternion.LookRotationSafe(lookDir, boid.TargetUp);
+            rot.Value = math.slerp(rot.Value, lookRot, settings.LookSpeed * Time.DeltaTime);
 
-                float3 forwardForce = forward * settings.MoveSpeed;
-
-                boid.MoveForce = moveForce + forwardForce;
-                boid.TargetUp = up;
-                boid.LineOfSightForce = lineOfSightForce;
-            });
-
-        Entities
-            .ForEach((Entity entity,
-                ref Translation translation, ref Rotation rot,
-                ref PhysicsVelocity velocity, ref BoidComponent boid) =>
-            {
-                DoBoidParticleEffects(entity, translation, rot, boid);
-
-                if (boid.HP <= 0.0f || boid.SettingsEntity == Entity.Null)
-                    return;
-                BoidSettingsComponent settings = EntityManager.GetComponentData<BoidSettingsComponent>(boid.SettingsEntity);
-
-                velocity.Linear += boid.MoveForce * Time.DeltaTime;
-                velocity.Linear += boid.LineOfSightForce * Time.DeltaTime;
-
-                float clampedSpeed = math.min(math.length(velocity.Linear), settings.MaxMoveSpeed);
-                velocity.Linear = math.normalize(velocity.Linear) * clampedSpeed;
-
-                float3 lookDir = math.normalizesafe(velocity.Linear);
-                quaternion lookRot = quaternion.LookRotationSafe(lookDir, boid.TargetUp);
-                rot.Value = math.slerp(rot.Value, lookRot, settings.LookSpeed * Time.DeltaTime);
-
+            if (entity != boidControllerComponent.BoidEntity)
                 ShootEnemy(entity, translation.Value, rot.Value, ref boid, settings);
-            });
+        });
     }
 
     void DoBoidParticleEffects(Entity entity, Translation translation, Rotation rot, BoidComponent boid)
     {
-        EntityParticleManager particleManager = null;
         if (!EntityManager.HasComponent<EntityParticleManager>(entity))
             return;
 
-        particleManager = EntityManager.GetComponentObject<EntityParticleManager>(entity);
+        EntityParticleManager particleManager = EntityManager.GetComponentObject<EntityParticleManager>(entity);
         if (particleManager == null)
             return;
 
+        // Update EntityParticleManager to follow boid.
         particleManager.transform.position = translation.Value;
         particleManager.transform.rotation = rot.Value;
         ParticleSystem[] particleSystems = particleManager.childParticleSystems;
 
         if (boid.HP <= 0.0f)
-        {
+        {   // If dead stop trail particles and play death particles.
             particleSystems[BoidComponent.TrailParticleIdx].Stop(true);
 
             if (!particleSystems[BoidComponent.DeathParticleIdx].isPlaying)
             {
                 particleSystems[BoidComponent.DeathParticleIdx].Play(true);
-                MonoBehaviour.Destroy(particleManager, particleSystems[BoidComponent.DeathParticleIdx].main.duration);
+                MonoBehaviour.Destroy(particleManager.gameObject, particleSystems[BoidComponent.DeathParticleIdx].main.duration);
             }
         }
 
@@ -112,7 +117,7 @@ public class BoidsSystem : ComponentSystem
             particleSystems[BoidComponent.TrailParticleIdx].Play(true);
     }
 
-    public static float3 GetTargetLeadPos(float3 origin, float3 targetPos, float3 targetVelocity, float projectileSpeed, float corrector)
+    public static float3 GetTargetLeadPos(float3 origin, float3 targetPos, float3 targetVelocity, float projectileSpeed, float modifier)
     {
         if (projectileSpeed == 0.0f || math.lengthsq(targetVelocity) <= 0.0f)
             return targetPos;
@@ -121,7 +126,7 @@ public class BoidsSystem : ComponentSystem
         float deltaLen = math.distance(targetPos, origin);
         float scalar = deltaLen / projectileSpeed;
 
-        float3 lead = targetVelocity * scalar * corrector;
+        float3 lead = targetVelocity * scalar * modifier;
         return targetPos + lead;
     }
 
@@ -147,6 +152,7 @@ public class BoidsSystem : ComponentSystem
         float3 targetPos = float3.zero;
         float closestDst = float.MaxValue;
 
+        // Get closest seen enemy boid.
         foreach (int neighbourIdx in broadNeighbours)
         {
             RigidBody neighbourRigid = collisionWorld.Bodies[neighbourIdx];
@@ -168,23 +174,48 @@ public class BoidsSystem : ComponentSystem
         if (targetEntity == Entity.Null)
             return;
 
-        Entity projectileEntity = EntityManager.Instantiate(settings.MissleEntity);
+        ProjectileComponent projectile;
+        float3 spawnPos;
+        Entity projectileEntity = ShootMissle(entity, boidPos, boidRot, ref boid, settings, out projectile, out spawnPos);
 
-        ProjectileComponent projectile = EntityManager.GetComponentData<ProjectileComponent>(projectileEntity);
+        PhysicsVelocity projectileVelocity = EntityManager.GetComponentData<PhysicsVelocity>(projectileEntity);
+        float aimModifier = random.NextFloat(0.9f, 1.1f);
+        float3 leadPos = GetTargetLeadPos(boidPos, targetPos, projectileVelocity.Linear, projectile.Speed, aimModifier);
+
+        float3 lookDir = math.normalize(leadPos - spawnPos);
+        quaternion lookRot = quaternion.LookRotation(lookDir, math.rotate(boidRot, math.up()));
+        EntityManager.SetComponentData(projectileEntity, new Rotation { Value = lookRot });
+    }
+
+    public Entity ShootMissle(Entity entity, float3 boidPos, quaternion boidRot, 
+        ref BoidComponent boid, in BoidSettingsComponent settings, out ProjectileComponent projectile, out float3 spawnPos)
+    {
+        Entity projectileEntity = EntityManager.Instantiate(settings.MissleEntity);
+        
+        projectile = EntityManager.GetComponentData<ProjectileComponent>(projectileEntity);
         projectile.OwnerEntity = entity;
         EntityManager.SetComponentData(projectileEntity, projectile);
 
-        PhysicsVelocity projectileVelocity = EntityManager.GetComponentData<PhysicsVelocity>(projectileEntity);
-        float3 leadPos = GetTargetLeadPos(boidPos, targetPos, projectileVelocity.Linear, projectile.Speed, 1.0f);
-
-        float3 lookDir = math.normalize(leadPos - boidPos);
-        quaternion lookRot = quaternion.LookRotation(lookDir, math.rotate(boidRot, math.up()));
-        EntityManager.SetComponentData(projectileEntity, new Rotation { Value = lookRot });
-        
-        float3 spawnPos = boidPos + math.rotate(boidRot, settings.ShootOffSet);
+        spawnPos = boidPos + math.rotate(boidRot, settings.ShootOffSet);
         EntityManager.SetComponentData(projectileEntity, new Translation { Value = spawnPos });
 
+        OnBoidShoot(entity, ref boid, settings);
+        return projectileEntity;
+    }
+
+    public void OnBoidShoot(Entity entity, ref BoidComponent boid, in BoidSettingsComponent settings)
+    {
         boid.NextAllowShootTime = (float)Time.ElapsedTime + settings.ShootRate;
+
+        if (!EntityManager.HasComponent<EntityParticleManager>(entity))
+            return;
+
+        EntityParticleManager particleManager = EntityManager.GetComponentObject<EntityParticleManager>(entity);
+        if (particleManager == null)
+            return;
+
+        ParticleSystem[] particleSystems = particleManager.childParticleSystems;
+        particleSystems[BoidComponent.MuzzleParticleIdx].Play(true);
     }
 
     float3 GetMapConstraintForce(float3 entityPos, BoidSettingsComponent settings)
@@ -219,6 +250,7 @@ public class BoidsSystem : ComponentSystem
 
         Unity.Physics.RaycastHit raycastResult = new Unity.Physics.RaycastHit();
 
+        // Get seen obstacle from CastRay.
         foreach (Unity.Physics.RaycastHit raycastHit in raycastHits)
         {
             if (raycastHit.Entity == entity || EntityManager.HasComponent<ProjectileComponent>(raycastHit.Entity))
@@ -268,6 +300,7 @@ public class BoidsSystem : ComponentSystem
         if (neighbourCount == 0)
             return float3.zero;
 
+        // Average and finalize the boid sum neighbour values to create a total boid force.
         float invsNeighbourCount = 1.0f / neighbourCount;
 
         float3 averagePos = sumNeighbourPos * invsNeighbourCount;
@@ -367,6 +400,7 @@ public class BoidsSystem : ComponentSystem
 
             RigidTransform neighbourTransform = neighbourRigid.WorldFromBody;
 
+            // Contribute a movement force in the relative up/down direction of this boid to clean its line of sight.
             float3 delta = math.normalize(neighbourTransform.pos - boidPos);
             float3 steerDir = math.cross(delta, boidRight);
 

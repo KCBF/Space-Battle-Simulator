@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 589863307464620909}
   - component: {fileID: 5585135109410063199}
   m_Layer: 0
-  m_Name: Space Ship 1 Particles
+  m_Name: Space Ship Particles
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -30,6 +30,7 @@ Transform:
   m_Children:
   - {fileID: 8241307603890671850}
   - {fileID: 2088151653179837054}
+  - {fileID: 8997762401154609452}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -48,6 +49,138 @@ MonoBehaviour:
   childParticleSystems:
   - {fileID: 8241307603890671853}
   - {fileID: 2088151653179837049}
+  - {fileID: 8997762401154609453}
+--- !u!1001 &447941824008407080
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 589863307464620909}
+    m_Modifications:
+    - target: {fileID: 898198825697390366, guid: fca4c80c52330524cbd4309c118af89c,
+        type: 3}
+      propertyPath: playOnAwake
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 998270586598129369, guid: fca4c80c52330524cbd4309c118af89c,
+        type: 3}
+      propertyPath: playOnAwake
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5998523726804007684, guid: fca4c80c52330524cbd4309c118af89c,
+        type: 3}
+      propertyPath: m_Materials.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8738162408036029924, guid: fca4c80c52330524cbd4309c118af89c,
+        type: 3}
+      propertyPath: m_Materials.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8856629436882152996, guid: fca4c80c52330524cbd4309c118af89c,
+        type: 3}
+      propertyPath: playOnAwake
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8856629436882152997, guid: fca4c80c52330524cbd4309c118af89c,
+        type: 3}
+      propertyPath: m_Materials.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8856629437223374440, guid: fca4c80c52330524cbd4309c118af89c,
+        type: 3}
+      propertyPath: playOnAwake
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8856629437223374441, guid: fca4c80c52330524cbd4309c118af89c,
+        type: 3}
+      propertyPath: m_Materials.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8856629437242833156, guid: fca4c80c52330524cbd4309c118af89c,
+        type: 3}
+      propertyPath: m_RootOrder
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8856629437242833156, guid: fca4c80c52330524cbd4309c118af89c,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8856629437242833156, guid: fca4c80c52330524cbd4309c118af89c,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8856629437242833156, guid: fca4c80c52330524cbd4309c118af89c,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8856629437242833156, guid: fca4c80c52330524cbd4309c118af89c,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8856629437242833156, guid: fca4c80c52330524cbd4309c118af89c,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8856629437242833156, guid: fca4c80c52330524cbd4309c118af89c,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8856629437242833156, guid: fca4c80c52330524cbd4309c118af89c,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8856629437242833156, guid: fca4c80c52330524cbd4309c118af89c,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8856629437242833156, guid: fca4c80c52330524cbd4309c118af89c,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8856629437242833156, guid: fca4c80c52330524cbd4309c118af89c,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8856629437242833157, guid: fca4c80c52330524cbd4309c118af89c,
+        type: 3}
+      propertyPath: playOnAwake
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8856629437242833162, guid: fca4c80c52330524cbd4309c118af89c,
+        type: 3}
+      propertyPath: m_Materials.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8856629437242833163, guid: fca4c80c52330524cbd4309c118af89c,
+        type: 3}
+      propertyPath: m_Name
+      value: MuzzleFlash TRIS
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: fca4c80c52330524cbd4309c118af89c, type: 3}
+--- !u!4 &8997762401154609452 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8856629437242833156, guid: fca4c80c52330524cbd4309c118af89c,
+    type: 3}
+  m_PrefabInstance: {fileID: 447941824008407080}
+  m_PrefabAsset: {fileID: 0}
+--- !u!198 &8997762401154609453 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 8856629437242833157, guid: fca4c80c52330524cbd4309c118af89c,
+    type: 3}
+  m_PrefabInstance: {fileID: 447941824008407080}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &4437374609632769177
 PrefabInstance:
   m_ObjectHideFlags: 0

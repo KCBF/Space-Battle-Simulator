@@ -18,4 +18,5 @@ public struct BoidComponent : IComponentData
 
     public static uint TrailParticleIdx = 0;
     public static uint DeathParticleIdx = 1;
+    public static uint MuzzleParticleIdx = 2;
 }

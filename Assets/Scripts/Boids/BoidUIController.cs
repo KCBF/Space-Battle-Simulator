@@ -20,11 +20,13 @@ public class BoidUIController : MonoBehaviour
         entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
     }
 
-    void Update()
+    void LateUpdate()
     {
-        BoidControllerComponent boidControllerComponent = World.DefaultGameObjectInjectionWorld.
-            GetExistingSystem(typeof(BoidUserControllerSystem))
-            .GetSingleton<BoidControllerComponent>();
+        var boidUserControllerSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystem<BoidUserControllerSystem>();
+        if (!boidUserControllerSystem.HasSingleton<BoidUserControllerComponent>())
+            return;
+
+        BoidUserControllerComponent boidControllerComponent = boidUserControllerSystem.GetSingleton<BoidUserControllerComponent>();
 
         boidTeamText.text = "Team: " + boidControllerComponent.SelectedGroup.ToString();
         seedText.text = "Seed: " + BoidsSim.Seed.ToString();
