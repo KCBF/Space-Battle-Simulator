@@ -319,7 +319,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Speed: 150
-  Damage: 1
+  Damage: 0.4
   LifeTime: 10
   DespawnTime: 0
   OwnerEntity: {fileID: 0}
+  ParticleManagerIdx: 0

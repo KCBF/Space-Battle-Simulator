@@ -53,8 +53,11 @@ public class BoidUIController : MonoBehaviour
             teamStatsText.text += $"Team {i}: " +
                 $"{boidTeamStatTrackerSystem.BoidTeamAliveCounts[i]} / {boidTeamStatTrackerSystem.BoidTeamTotalCounts[i]}\n";
 
-            teamStatsText.text += $"Team Base HP: {i}" +
+            teamStatsText.text += $"Team {i} Base HP: " +
                 $"{boidTeamStatTrackerSystem.BoidBasesHPs[i]}\n";
+            
+            teamStatsText.text += $"Team {i} Respawn Time: " +
+                Mathf.Max(0.0f, boidTeamStatTrackerSystem.BoidNextSpawnTimes[i] - Time.time).ToString("f2") + "\n";
         }
     }
 
@@ -69,6 +72,6 @@ public class BoidUIController : MonoBehaviour
         BoidComponent boidComponent = entityManager.GetComponentData<BoidComponent>(boidControllerComponent.BoidEntity);
 
         healthBar.fillAmount = boidComponent.HP;
-        missleCooldown.text = "Missle Cooldown: " + Mathf.Max(boidComponent.NextAllowShootTime - Time.time, 0.0f).ToString();
+        missleCooldown.text = "Missle Cooldown: " + Mathf.Max(0.0f, boidComponent.NextAllowShootTime - Time.time).ToString("f2");
     }
 }

@@ -43,6 +43,14 @@ public class BoidsSystem : ComponentSystem
         collisionWorld = physicsWorldSystem.PhysicsWorld.CollisionWorld;
         BoidUserControllerComponent boidControllerComponent = boidUserControllerSystem.GetSingleton<BoidUserControllerComponent>();
 
+        NativeArray<float3> boidStationPositions = new NativeArray<float3>((int)BoidComponent.MaxGroupID, Allocator.Temp);
+        NativeArray<BoidStationComponent> boidStationComponents = new NativeArray<BoidStationComponent>((int)BoidComponent.MaxGroupID, Allocator.Temp);
+        Entities.ForEach((ref Translation translation, ref BoidStationComponent boidStation) =>
+        {
+            boidStationPositions[(int)boidStation.GroupID] = translation.Value;
+            boidStationComponents[(int)boidStation.GroupID] = boidStation;
+        });
+
         Entities.ForEach((Entity entity,
             ref Translation translation, ref Rotation rot,
             ref PhysicsVelocity velocity, ref BoidComponent boid) =>
@@ -65,6 +73,8 @@ public class BoidsSystem : ComponentSystem
                 moveForce += GetMapConstraintForce(translation.Value, settings);
 
                 lineOfSightForce = GetBoidLineOfSightForce(entity, translation.Value, forward, up, boid, settings);
+
+                moveForce += BaseStationWeight(translation.Value, boid, settings, boidStationPositions, boidStationComponents);
             }
 
             float3 forwardForce = forward * settings.MoveSpeed;
@@ -94,9 +104,45 @@ public class BoidsSystem : ComponentSystem
             quaternion lookRot = quaternion.LookRotationSafe(lookDir, boid.TargetUp);
             rot.Value = math.slerp(rot.Value, lookRot, settings.LookSpeed * Time.DeltaTime);
 
-            if (entity != boidControllerComponent.BoidEntity)
+            if (!(boidControllerComponent.Manual && entity == boidControllerComponent.BoidEntity))
                 ShootEnemy(entity, translation.Value, rot.Value, ref boid, settings);
         });
+    }
+
+    float3 BaseStationWeight(float3 boidPos, BoidComponent boid, in BoidSettingsComponent settings, 
+        in NativeArray<float3> boidStationPositions, in NativeArray<BoidStationComponent> boidStationComponents)
+    {
+        int targetBoidStationIdx = -1;
+        float closestDst = float.MaxValue;
+
+        // Get closest seen enemy boid.
+        for (int i = 1; i < boidStationComponents.Length; ++i)
+        {
+            if (boidStationComponents[i].HP <= 0.0f || boidStationComponents[i].GroupID == boid.GroupID || boidStationComponents[i].GroupID == 0)
+                continue;
+
+            float deltaLen2 = math.lengthsq(boidStationPositions[i] - boidPos);
+            if (deltaLen2 <= boidStationComponents[i].AttractRadius * boidStationComponents[i].AttractRadius)
+                continue;
+
+            if (deltaLen2 < closestDst)
+            {
+                closestDst = deltaLen2;
+                targetBoidStationIdx = i;
+            }
+        }
+
+        if (targetBoidStationIdx < 0 || targetBoidStationIdx >= boidStationComponents.Length)
+            return float3.zero;
+
+        BoidStationComponent boidStation = boidStationComponents[targetBoidStationIdx];
+        float3 centre = boidStationPositions[targetBoidStationIdx];
+
+        float3 deltaPos = centre - boidPos;
+        float deltaLen = math.length(deltaPos);
+        
+        float3 moveDir = math.normalize(deltaPos);
+        return moveDir * (deltaLen - boidStation.AttractRadius) * settings.BaseStationWeight;
     }
 
     void DoBoidParticleEffects(Entity entity, Translation translation, Rotation rot, BoidComponent boid)
@@ -116,12 +162,10 @@ public class BoidsSystem : ComponentSystem
         if (boid.HP <= 0.0f)
         {   // If dead stop trail particles and play death particles.
             particleSystems[BoidComponent.TrailParticleIdx].Stop(true);
-
-            if (!particleSystems[BoidComponent.DeathParticleIdx].isPlaying)
-            {
+            
+            if (boid.DiedTime + Time.DeltaTime >= Time.ElapsedTime - Time.DeltaTime && 
+                !particleSystems[BoidComponent.DeathParticleIdx].isPlaying)
                 particleSystems[BoidComponent.DeathParticleIdx].Play(true);
-                MonoBehaviour.Destroy(particleManager.gameObject, particleSystems[BoidComponent.DeathParticleIdx].main.duration);
-            }
         }
 
         else if (!particleSystems[BoidComponent.TrailParticleIdx].isPlaying)
@@ -230,7 +274,7 @@ public class BoidsSystem : ComponentSystem
         particleSystems[BoidComponent.MuzzleParticleIdx].Play(true);
     }
 
-    float3 GetMapConstraintForce(float3 entityPos, BoidSettingsComponent settings)
+    float3 GetMapConstraintForce(float3 entityPos, in BoidSettingsComponent settings)
     {
         float3 deltaPos = settings.MapCentre - entityPos;
         float deltaLen = math.length(deltaPos);
@@ -346,7 +390,7 @@ public class BoidsSystem : ComponentSystem
             return false;
         
         RigidTransform neighbourTransform = neighbourRigid.WorldFromBody;
-        return CanSeeNeighbour(boidPos, boidForward, neighbourTransform.pos, viewDst, viewAngle * 2.0f);
+        return CanSeeNeighbour(boidPos, boidForward, neighbourTransform.pos, viewDst, viewAngle);
     }
 
     bool CanSeeBoidNeighbour(Entity entity, float3 boidPos, float3 boidForward, BoidComponent boid,

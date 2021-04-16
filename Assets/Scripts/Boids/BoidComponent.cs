@@ -5,8 +5,10 @@ using UnityEngine;
 [GenerateAuthoringComponent]
 public struct BoidComponent : IComponentData
 {
+    public static uint MaxGroupID = 4;
     public uint GroupID;
     public float HP;
+    public float DiedTime;
 
     public Entity SettingsEntity;
     public float3 MoveForce;
@@ -16,7 +18,7 @@ public struct BoidComponent : IComponentData
 
     public float NextAllowShootTime;
 
-    public static uint TrailParticleIdx = 0;
-    public static uint DeathParticleIdx = 1;
-    public static uint MuzzleParticleIdx = 2;
+    public static int TrailParticleIdx = 0;
+    public static int DeathParticleIdx = 1;
+    public static int MuzzleParticleIdx = 2;
 }

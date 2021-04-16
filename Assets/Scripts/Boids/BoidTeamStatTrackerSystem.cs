@@ -2,18 +2,22 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Entities;
 using Unity.Collections;
+using Unity.Transforms;
 
+[UpdateAfter(typeof(BoidsSystem))]
 public class BoidTeamStatTrackerSystem : ComponentSystem
 {
-    public uint[] BoidTeamTotalCounts;
-    public uint[] BoidTeamAliveCounts;
+    public int[] BoidTeamTotalCounts;
+    public int[] BoidTeamAliveCounts;
     public float[] BoidBasesHPs;
+    public float[] BoidNextSpawnTimes;
 
     protected override void OnCreate()
     {
-        BoidTeamTotalCounts = new uint[4];
-        BoidTeamAliveCounts = new uint[4];
-        BoidBasesHPs = new float[4];
+        BoidTeamTotalCounts = new int[BoidComponent.MaxGroupID];
+        BoidTeamAliveCounts = new int[BoidComponent.MaxGroupID];
+        BoidBasesHPs = new float[BoidComponent.MaxGroupID];
+        BoidNextSpawnTimes = new float[BoidComponent.MaxGroupID];
     }
 
     protected override void OnUpdate()
@@ -23,19 +27,27 @@ public class BoidTeamStatTrackerSystem : ComponentSystem
             BoidTeamTotalCounts[i] = 0;
             BoidTeamAliveCounts[i] = 0;
             BoidBasesHPs[i] = 0;
+            BoidNextSpawnTimes[i] = 0;
         }
 
         Entities.ForEach((ref BoidComponent boid) =>
         {
-            ++BoidTeamTotalCounts[(int)boid.GroupID];
+            ++BoidTeamTotalCounts[boid.GroupID];
 
             if (boid.HP > 0.0f)
-                ++BoidTeamAliveCounts[(int)boid.GroupID];
+                ++BoidTeamAliveCounts[boid.GroupID];
         });
 
-        Entities.ForEach((ref BoidStationComponent spaceShipBase) =>
+        Entities.ForEach((ref BoidStationComponent boidStation) =>
         {
-            BoidBasesHPs[(int)spaceShipBase.GroupID] += spaceShipBase.HP;
+            BoidBasesHPs[boidStation.GroupID] += boidStation.HP;
+        });
+
+        Entities.ForEach((ref BoidStationComponent boidStation, ref BoidSpawnerComponent boidSpawner) =>
+        {
+            boidSpawner.AliveBoidCount = BoidTeamAliveCounts[boidStation.GroupID];
+            boidSpawner.TotalBoidCount = BoidTeamTotalCounts[boidStation.GroupID];
+            BoidNextSpawnTimes[boidStation.GroupID] = boidSpawner.NextSpawnTime;
         });
     }
 }

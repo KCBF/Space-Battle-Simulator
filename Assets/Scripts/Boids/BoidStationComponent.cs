@@ -7,5 +7,6 @@ using Unity.Entities;
 public struct BoidStationComponent : IComponentData
 {
     public float HP;
-    public float GroupID;
+    public uint GroupID;
+    public float AttractRadius;
 }
