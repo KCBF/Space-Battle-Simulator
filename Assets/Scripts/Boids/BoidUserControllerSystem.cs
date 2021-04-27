@@ -1,5 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
+// Author: Peter Richards.
 using UnityEngine;
 using Unity.Entities;
 using Unity.Transforms;

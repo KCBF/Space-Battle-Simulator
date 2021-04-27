@@ -1,8 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+// Author: Peter Richards.
 using Unity.Entities;
-using Unity.Transforms;
 using Unity.Mathematics;
 
 [System.Serializable]

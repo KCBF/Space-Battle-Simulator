@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿// Author: Peter Richards.
 using UnityEngine;
 using Unity.Entities;
 using Unity.Transforms;
@@ -108,6 +107,8 @@ public class BoidsSim : MonoBehaviour
     public static uint Seed = 5;
     Unity.Mathematics.Random random;
 
+    public EntityParticleManager[] BoidStationParticleManagers;
+
     void Start()
     {
         entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
@@ -127,6 +128,12 @@ public class BoidsSim : MonoBehaviour
         {
             projectileSystem.ParticleManagers[i] = boidGroups[i].missleParticleManager;
         }
+
+        BoidStationWalkerSystem stationWalkerSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystem<BoidStationWalkerSystem>();
+        stationWalkerSystem.grid = FindObjectOfType<AStarGrid>();
+
+        World.DefaultGameObjectInjectionWorld
+            .GetOrCreateSystem<BoidStationWalkerSystem>().ParticleManagers = BoidStationParticleManagers;
     }
 
     public void SpawnBoids(uint num, BoidGroup boidGroup)
@@ -140,12 +147,10 @@ public class BoidsSim : MonoBehaviour
                 entityManager.AddComponentObject(entity, particleManager);
             }
             
-            float3 spawnPos = random.NextFloat3Direction() * boidGroup.spawnRadius;
+            float3 spawnPos = random.NextFloat3Direction() * random.NextFloat(boidGroup.spawnRadius * 0.25f, boidGroup.spawnRadius);
             spawnPos += boidGroup.settings.MapCentre;
-            spawnPos.y = 0.0f;
 
             float3 vel = random.NextFloat3Direction() * boidGroup.settings.MoveSpeed;
-            vel.y = 0.0f;
 
             entityManager.SetComponentData(entity, new Translation { Value = spawnPos });
             entityManager.SetComponentData(entity, new PhysicsVelocity { Linear = vel });

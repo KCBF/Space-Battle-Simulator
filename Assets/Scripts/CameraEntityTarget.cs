@@ -1,5 +1,5 @@
-﻿using UnityEngine;
-using Unity.Mathematics;
+﻿// Author: Peter Richards.
+using UnityEngine;
 using Unity.Entities;
 using Unity.Transforms;
 

@@ -1,6 +1,6 @@
-﻿using Unity.Entities;
+﻿// Author: Peter Richards.
+using Unity.Entities;
 using Unity.Mathematics;
-using UnityEngine;
 
 [System.Serializable]
 [GenerateAuthoringComponent]
@@ -23,6 +23,7 @@ public struct BoidSettingsComponent : IComponentData
     public float FiringViewDst;
     public float FiringFOV;
     public float LineOfSightWeight;
+    public float ChaseWeight;
 
     public float3 MapCentre;
     public float MapRadius;

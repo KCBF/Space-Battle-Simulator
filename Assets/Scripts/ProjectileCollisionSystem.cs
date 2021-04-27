@@ -1,4 +1,4 @@
-using Unity.Burst;
+// Author: Peter Richards.
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
@@ -6,7 +6,6 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using Unity.Physics;
 using Unity.Physics.Systems;
-using UnityEngine;
 
 [UpdateBefore(typeof(BoidsSystem))]
 public class ProjectileCollisionSystem : JobComponentSystem

@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 8401130999098845983}
   - component: {fileID: 3143804102966315790}
   - component: {fileID: 3719485573680738976}
+  - component: {fileID: 2507258346425566452}
   m_Layer: 0
   m_Name: Asteroid Lava Red
   m_TagString: Untagged
@@ -171,7 +172,7 @@ MonoBehaviour:
     Value:
       x: -90
       y: 0
-      z: 90
+      z: -90
     RotationOrder: 4
   m_Capsule:
     Height: 5.9747777
@@ -305,3 +306,16 @@ MonoBehaviour:
       m_Value: 0
   m_SerializedVersion: 1
   m_ConvexRadius_Deprecated: -1
+--- !u!114 &2507258346425566452
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8413301549470605407}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 696f7e4d52d03f44daf3a813f4950119, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  f: 0

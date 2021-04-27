@@ -1,9 +1,8 @@
-﻿using System.Collections.Generic;
+﻿// Author: Peter Richards.
 using Unity.Entities;
 using Unity.Transforms;
 using Unity.Mathematics;
 using Unity.Physics;
-using Unity.Physics.Extensions;
 using Unity.Collections;
 using UnityEngine;
 using Unity.Jobs;
@@ -70,6 +69,7 @@ public class BoidsSystem : ComponentSystem
             if (math.all(moveForce == float3.zero))
             {
                 moveForce = GetBoidMoveForce(entity, translation.Value, forward, ref up, velocity.Linear, boid, settings);
+                moveForce += GetBoidChaseForce(entity, translation.Value, forward, boid, settings);
                 moveForce += GetMapConstraintForce(translation.Value, settings);
 
                 lineOfSightForce = GetBoidLineOfSightForce(entity, translation.Value, forward, up, boid, settings);
@@ -98,7 +98,7 @@ public class BoidsSystem : ComponentSystem
             velocity.Linear += boid.LineOfSightForce * Time.DeltaTime;
 
             float clampedSpeed = math.min(math.length(velocity.Linear), settings.MaxMoveSpeed);
-            velocity.Linear = math.normalize(velocity.Linear) * clampedSpeed;
+            velocity.Linear = math.normalizesafe(velocity.Linear) * clampedSpeed;
 
             float3 lookDir = math.normalizesafe(velocity.Linear);
             quaternion lookRot = quaternion.LookRotationSafe(lookDir, boid.TargetUp);
@@ -235,7 +235,7 @@ public class BoidsSystem : ComponentSystem
         Entity projectileEntity = ShootMissle(entity, boidPos, boidRot, ref boid, settings, out projectile, out spawnPos);
 
         PhysicsVelocity projectileVelocity = EntityManager.GetComponentData<PhysicsVelocity>(projectileEntity);
-        float aimModifier = random.NextFloat(0.9f, 1.1f);
+        float aimModifier = random.NextFloat(0.95f, 1.05f);
         float3 leadPos = GetTargetLeadPos(boidPos, targetPos, projectileVelocity.Linear, projectile.Speed, aimModifier);
 
         float3 lookDir = math.normalize(leadPos - spawnPos);
@@ -331,6 +331,51 @@ public class BoidsSystem : ComponentSystem
 
         float3 avoidanceForce = raycastResult.SurfaceNormal * overlapLen * settings.ObstacleAvoidWeight;
         return avoidanceForce;
+    }
+
+    float3 GetBoidChaseForce(Entity entity, float3 boidPos, float3 boidForward, BoidComponent boid, in BoidSettingsComponent settings)
+    {
+        PhysicsCategoryTags belongsTo = new PhysicsCategoryTags { Category00 = true };
+        NativeList<int> broadNeighbours;
+        GetBroadNeighbours(
+            collisionWorld, boidPos, settings.FiringViewDst, out broadNeighbours,
+            new CollisionFilter
+            {
+                BelongsTo = belongsTo.Value,
+                CollidesWith = ~0u,
+                GroupIndex = 0
+            }
+        );
+
+        float3 targetPos = float3.zero;
+        float closestDst = float.MaxValue;
+
+        foreach (int neighbourIdx in broadNeighbours)
+        {
+            RigidBody neighbourRigid = collisionWorld.Bodies[neighbourIdx];
+
+            if (!CanSeeBoidNeighbour(entity, boidPos, boidForward, boid, neighbourRigid, settings.FiringViewDst, settings.FiringFOV, false))
+                continue;
+
+            RigidTransform neighbourTransform = neighbourRigid.WorldFromBody;
+            float3 deltaPos = neighbourTransform.pos - boidPos;
+            float deltaLen2 = math.lengthsq(deltaPos);
+            if (deltaLen2 <= settings.BoidDetectRadius * settings.BoidDetectRadius)
+                continue;
+
+            if (deltaLen2 < closestDst)
+            {
+                targetPos = neighbourTransform.pos;
+                closestDst = deltaLen2;
+            }
+        }
+
+        if (closestDst == float.MaxValue)
+            return float3.zero;
+
+        float3 cohesionForce = targetPos - boidPos;
+        cohesionForce *= settings.ChaseWeight;
+        return cohesionForce;
     }
 
     float3 GetBoidMoveForce(Entity entity, float3 boidPos, float3 boidForward, ref float3 boidUp, float3 boidLinearVelocity, BoidComponent boid, in BoidSettingsComponent settings)

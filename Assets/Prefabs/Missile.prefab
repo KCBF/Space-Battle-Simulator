@@ -319,7 +319,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Speed: 150
-  Damage: 0.4
+  Damage: 0.5
   LifeTime: 10
   DespawnTime: 0
   OwnerEntity: {fileID: 0}

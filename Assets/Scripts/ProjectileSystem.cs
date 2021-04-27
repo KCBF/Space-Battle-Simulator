@@ -1,12 +1,8 @@
-﻿using System.Collections.Generic;
+﻿// Author: Peter Richards.
 using Unity.Entities;
 using Unity.Transforms;
 using Unity.Mathematics;
 using Unity.Physics;
-using Unity.Physics.Extensions;
-using Unity.Collections;
-using Unity.Jobs;
-using Unity.Physics.Authoring;
 using UnityEngine;
 
 [UpdateBefore(typeof(Unity.Physics.Systems.BuildPhysicsWorld))]

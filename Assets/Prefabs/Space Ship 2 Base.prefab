@@ -14,6 +14,8 @@ GameObject:
   - component: {fileID: -9221349424001094201}
   - component: {fileID: 7923363459790306931}
   - component: {fileID: 3673017505133142748}
+  - component: {fileID: 8457327661290710335}
+  - component: {fileID: 4153483623931573011}
   m_Layer: 0
   m_Name: Space Ship 2 Base
   m_TagString: Untagged
@@ -68,9 +70,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d9bf79c7a4b89f49afebc975e82aa30, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HP: 180
+  HP: 30
   GroupID: 2
   AttractRadius: 100
+  PatrolRadius: 350
+  TargetUp:
+    x: 0
+    y: 0
+    z: 0
+  ParticleManagerIdx: 1
+  deaded: 0
 --- !u!114 &-9221349424001094201
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -110,9 +119,9 @@ MonoBehaviour:
     y: -0.03807257
     z: 0.0061543584
   m_PrimitiveSize:
-    x: 0.47405648
+    x: 0.26528347
     y: 1.5455359
-    z: 0.78929
+    z: 0.46449506
   m_PrimitiveOrientation:
     Value:
       x: -0
@@ -121,11 +130,11 @@ MonoBehaviour:
     RotationOrder: 4
   m_Capsule:
     Height: 1.5455359
-    Radius: 0.394645
+    Radius: 0.23224753
     Axis: 1
   m_Cylinder:
     Height: 1.5455359
-    Radius: 0.394645
+    Radius: 0.23224753
     Axis: 1
   m_CylinderSideCount: 20
   m_SphereRadius: 0.77276796
@@ -300,6 +309,42 @@ MonoBehaviour:
     Tag05: 0
     Tag06: 0
     Tag07: 0
+--- !u!114 &8457327661290710335
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7677378084212497513}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bae77181125bae48b5c98cf012e686b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  CurrentNodeIdx: 0
+  NextNodeThreshold: 10
+  TargetPos:
+    x: 0
+    y: 0
+    z: 0
+  MoveSpeed: 50
+  LookSpeed: 0.4
+--- !u!114 &4153483623931573011
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7677378084212497513}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 480b26f6c349698439ac6ef188017651, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Values:
+  - x: 0
+    y: 0
+    z: 0
 --- !u!1 &7677378084212497521
 GameObject:
   m_ObjectHideFlags: 0

@@ -112,6 +112,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   GroupID: 2
   HP: 1
+  DiedTime: 0
   SettingsEntity: {fileID: 0}
   MoveForce:
     x: 0
