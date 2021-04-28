@@ -232,7 +232,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 254618560}
-  m_RootOrder: 6
+  m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -371,6 +371,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Space Ship 3 Base
       objectReference: {fileID: 0}
+    - target: {fileID: 2624090196592604699, guid: ccf0acebe3e3be64ea859d9de4f7cc22,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7127323053534213628, guid: ccf0acebe3e3be64ea859d9de4f7cc22,
         type: 3}
       propertyPath: m_SphereRadius
@@ -490,6 +495,7 @@ RectTransform:
   - {fileID: 85501068}
   - {fileID: 819557618}
   - {fileID: 2024914721}
+  - {fileID: 1547203189}
   - {fileID: 130125945}
   m_Father: {fileID: 0}
   m_RootOrder: 2
@@ -573,9 +579,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   boidGroups:
-  - gizmo: 1
-    numToSpawn: 15
-    spawnRadius: 400
+  - gizmo: 0
+    numToSpawn: 50
+    spawnRadius: 900
+    spawnLoc:
+      x: 0
+      y: 0
+      z: 0
     boidObj: {fileID: 2976534488348221673, guid: caaf80c29b09fc64081951f5b51ee16d,
       type: 3}
     particleManager: {fileID: 5585135109410063199, guid: f0c3804ea9ff0b644bc49dff1832a27b,
@@ -592,7 +602,7 @@ MonoBehaviour:
       BoidDetectFOV: 240
       CohesionWeight: 1
       AlignmentWeight: 10
-      SeparationWeight: 30
+      SeparationWeight: 50
       ObstacleAvoidWeight: 30
       ObstacleViewDst: 100
       FiringViewDst: 145
@@ -603,17 +613,21 @@ MonoBehaviour:
         x: 0
         y: 0
         z: 0
-      MapRadius: 400
+      MapRadius: 700
       MapRadiusWeight: 0.5
-      BaseStationWeight: 0.3
+      BaseStationWeight: 0.1
       ShootRate: 3
       ShootOffSet:
         x: 0
         y: -5
         z: 8
-  - gizmo: 1
-    numToSpawn: 15
-    spawnRadius: 400
+  - gizmo: 0
+    numToSpawn: 50
+    spawnRadius: 900
+    spawnLoc:
+      x: 0
+      y: 0
+      z: 0
     boidObj: {fileID: 2224964847766572744, guid: a2eb9e90950e3e44abecdd0b0a7b7d99,
       type: 3}
     particleManager: {fileID: 5585135109410063199, guid: f0c3804ea9ff0b644bc49dff1832a27b,
@@ -630,7 +644,7 @@ MonoBehaviour:
       BoidDetectFOV: 240
       CohesionWeight: 1
       AlignmentWeight: 10
-      SeparationWeight: 30
+      SeparationWeight: 50
       ObstacleAvoidWeight: 30
       ObstacleViewDst: 100
       FiringViewDst: 145
@@ -641,17 +655,21 @@ MonoBehaviour:
         x: 0
         y: 0
         z: 0
-      MapRadius: 400
+      MapRadius: 700
       MapRadiusWeight: 0.5
-      BaseStationWeight: 0.3
+      BaseStationWeight: 0.1
       ShootRate: 3
       ShootOffSet:
         x: 0
         y: -5
         z: 8
-  - gizmo: 1
-    numToSpawn: 15
-    spawnRadius: 400
+  - gizmo: 0
+    numToSpawn: 50
+    spawnRadius: 900
+    spawnLoc:
+      x: 0
+      y: 0
+      z: 0
     boidObj: {fileID: 633681575288219995, guid: 188bf7c1de1725e4fa332d18e5bd2785,
       type: 3}
     particleManager: {fileID: 5585135109410063199, guid: f0c3804ea9ff0b644bc49dff1832a27b,
@@ -668,7 +686,7 @@ MonoBehaviour:
       BoidDetectFOV: 240
       CohesionWeight: 1
       AlignmentWeight: 10
-      SeparationWeight: 30
+      SeparationWeight: 50
       ObstacleAvoidWeight: 30
       ObstacleViewDst: 100
       FiringViewDst: 145
@@ -679,9 +697,9 @@ MonoBehaviour:
         x: 0
         y: 0
         z: 0
-      MapRadius: 400
+      MapRadius: 700
       MapRadiusWeight: 0.5
-      BaseStationWeight: 0.3
+      BaseStationWeight: 0.1
       ShootRate: 3
       ShootOffSet:
         x: 0
@@ -692,9 +710,9 @@ MonoBehaviour:
     asteroidEntities:
     - {fileID: 7921242236347662474, guid: 092e71162c5214a42b4ef1ef8154a0ce, type: 3}
     - {fileID: 8413301549470605407, guid: f978fe89715f7924e85653c867906c56, type: 3}
-    asteroidInnerSpaceRadius: 200
-    asteroidOuterSpaceRadius: 500
-    numAsteroidsToSpawn: 30
+    asteroidInnerSpaceRadius: 300
+    asteroidOuterSpaceRadius: 800
+    numAsteroidsToSpawn: 60
   BoidStationParticleManagers:
   - {fileID: 8547904964338045554, guid: 4d6ab59c790e1c349ae6e3da929af3c5, type: 3}
   - {fileID: 8774950784776768655, guid: 3ed95bfe3aac82a4dac33e98bee420aa, type: 3}
@@ -732,6 +750,7 @@ MonoBehaviour:
   missleCooldown: {fileID: 819557616}
   crosshair: {fileID: 2024914719}
   teamStatsText: {fileID: 130125946}
+  controlsText: {fileID: 1547203190}
 --- !u!1 &614858166
 GameObject:
   m_ObjectHideFlags: 0
@@ -762,17 +781,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gridSize:
-    x: 800
-    y: 800
-    z: 800
+    x: 1600
+    y: 1600
+    z: 1600
   nodeSize:
-    x: 150
-    y: 150
-    z: 150
+    x: 100
+    y: 100
+    z: 100
   gridDimensions:
-    x: 5
-    y: 5
-    z: 5
+    x: 16
+    y: 16
+    z: 16
   drawGizmos: 0
 --- !u!4 &614858168
 Transform:
@@ -1610,6 +1629,85 @@ LightingSettings:
   m_PVRFilteringAtrousPositionSigmaDirect: 0.5
   m_PVRFilteringAtrousPositionSigmaIndirect: 2
   m_PVRFilteringAtrousPositionSigmaAO: 1
+--- !u!1 &1547203188
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1547203189}
+  - component: {fileID: 1547203191}
+  - component: {fileID: 1547203190}
+  m_Layer: 5
+  m_Name: Controls
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1547203189
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1547203188}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 254618560}
+  m_RootOrder: 6
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 1, y: 0.5}
+  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchoredPosition: {x: -133, y: 0}
+  m_SizeDelta: {x: 240, y: 400}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1547203190
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1547203188}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_FontData:
+    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_FontSize: 50
+    m_FontStyle: 0
+    m_BestFit: 0
+    m_MinSize: 10
+    m_MaxSize: 50
+    m_Alignment: 0
+    m_AlignByGeometry: 0
+    m_RichText: 1
+    m_HorizontalOverflow: 0
+    m_VerticalOverflow: 0
+    m_LineSpacing: 1
+  m_Text: 'Controls: WASDQE LeftCtrl Space. ZX.CV Enter.'
+--- !u!222 &1547203191
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1547203188}
+  m_CullTransparentMesh: 1
 --- !u!1 &1691869740
 GameObject:
   m_ObjectHideFlags: 0
@@ -1837,17 +1935,17 @@ PrefabInstance:
     - target: {fileID: 2582839987311928145, guid: f2d4b538ba1c4c64ab79d34fcf4cf36f,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: -137
+      value: 664
       objectReference: {fileID: 0}
     - target: {fileID: 2582839987311928145, guid: f2d4b538ba1c4c64ab79d34fcf4cf36f,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -433
       objectReference: {fileID: 0}
     - target: {fileID: 2582839987311928145, guid: f2d4b538ba1c4c64ab79d34fcf4cf36f,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: 527
+      value: 781
       objectReference: {fileID: 0}
     - target: {fileID: 2582839987311928145, guid: f2d4b538ba1c4c64ab79d34fcf4cf36f,
         type: 3}
@@ -1911,7 +2009,7 @@ PrefabInstance:
     - target: {fileID: 7677378084212654153, guid: 352d8fe031f53f141b0e8affefae6f28,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: -228
+      value: -422
       objectReference: {fileID: 0}
     - target: {fileID: 7677378084212654153, guid: 352d8fe031f53f141b0e8affefae6f28,
         type: 3}
@@ -1921,7 +2019,7 @@ PrefabInstance:
     - target: {fileID: 7677378084212654153, guid: 352d8fe031f53f141b0e8affefae6f28,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: 50
+      value: 28
       objectReference: {fileID: 0}
     - target: {fileID: 7677378084212654153, guid: 352d8fe031f53f141b0e8affefae6f28,
         type: 3}
@@ -2056,6 +2154,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Space Ship 1 Base
+      objectReference: {fileID: 0}
+    - target: {fileID: 3993161450960221277, guid: 1c74b6bdde86bd848a3f3e4fb3975bab,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6789380239602641597, guid: 1c74b6bdde86bd848a3f3e4fb3975bab,
         type: 3}

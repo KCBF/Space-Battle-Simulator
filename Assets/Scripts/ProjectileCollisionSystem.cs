@@ -37,6 +37,7 @@ public class ProjectileCollisionSystem : JobComponentSystem
                 return;
             
             boid.HP -= projectile.Damage;
+            boid.HitTime = ElapsedTime + projectile.HitTime;
 
             if (boid.HP <= 0.0f && boid.DiedTime < ElapsedTime)
                 boid.DiedTime = ElapsedTime;

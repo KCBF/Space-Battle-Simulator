@@ -1,3 +1,4 @@
+// Author: Peter Richards.
 using Unity.Entities;
 
 [GenerateAuthoringComponent]

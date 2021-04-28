@@ -1290,7 +1290,7 @@ MonoBehaviour:
   HP: 30
   GroupID: 1
   AttractRadius: 100
-  PatrolRadius: 350
+  PatrolRadius: 600
   TargetUp:
     x: 0
     y: 0
@@ -1314,7 +1314,7 @@ MonoBehaviour:
   SpawnOffSet:
     x: 0
     y: 0
-    z: -160
+    z: -1400
   AliveBoidCount: 0
   TotalBoidCount: 0
   Enabled: 0
@@ -1539,13 +1539,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   CurrentNodeIdx: 0
-  NextNodeThreshold: 10
+  NextNodeThreshold: 5
   TargetPos:
     x: 0
     y: 0
     z: 0
-  MoveSpeed: 50
-  LookSpeed: 0.4
+  MoveSpeed: 30
+  LookSpeed: 0.2
 --- !u!114 &654184900659665207
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -322,5 +322,6 @@ MonoBehaviour:
   Damage: 0.5
   LifeTime: 10
   DespawnTime: 0
+  HitTime: 2
   OwnerEntity: {fileID: 0}
   ParticleManagerIdx: 0

@@ -1,3 +1,4 @@
+// Author: Peter Richards.
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -43,7 +44,7 @@ public class BoidRespawnerSystem : ComponentSystem
             
             boidSpawner.NextSpawnTime = (float)Time.ElapsedTime + boidSpawner.SpawnRate;
 
-            float3 spawnPos = translation.Value + math.rotate(rot.Value, boidSpawner.SpawnOffSet);
+            float3 spawnPos = /*translation.Value + */math.rotate(rot.Value, boidSpawner.SpawnOffSet);
             EntityManager.SetComponentData(boidEntity, new Translation { Value = spawnPos });
             EntityManager.SetComponentData(boidEntity, new Rotation { Value = math.inverse(rot.Value) });
             

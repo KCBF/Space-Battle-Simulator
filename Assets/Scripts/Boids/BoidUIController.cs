@@ -12,6 +12,7 @@ public class BoidUIController : MonoBehaviour
     public Text missleCooldown;
     public Image crosshair;
     public Text teamStatsText;
+    public Text controlsText;
 
     EntityManager entityManager;
 
@@ -41,6 +42,7 @@ public class BoidUIController : MonoBehaviour
     void DrawTeamStatsText()
     {
         teamStatsText.enabled = Input.GetKey(KeyCode.R);
+        controlsText.enabled = Input.GetKey(KeyCode.R);
         if (!teamStatsText.enabled)
             return;
 

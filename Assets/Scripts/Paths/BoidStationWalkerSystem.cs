@@ -35,6 +35,11 @@ public class BoidStationWalkerSystem : ComponentSystem
         });
     }
 
+    protected override void OnStopRunning()
+    {
+        nextUpdateTime = 0.0f;
+    }
+
     protected override void OnUpdate()
     {
         collisionWorld = physicsWorldSystem.PhysicsWorld.CollisionWorld;
@@ -50,6 +55,7 @@ public class BoidStationWalkerSystem : ComponentSystem
             DynamicBuffer<AStarPathElement> pathBuffer, ref AStarWalkerComponent walker, ref BoidStationComponent boidStation,
             ref Translation translation, ref Rotation rot, ref PhysicsVelocity velocity) =>
         {
+            velocity.Linear = float3.zero;
             EntityParticleManager entityParticleManager = EntityManager.GetComponentObject<EntityParticleManager>(entity);
             if (boidStation.HP <= 0.0f)
             {
@@ -68,27 +74,25 @@ public class BoidStationWalkerSystem : ComponentSystem
 
             DynamicBuffer<int3> path = pathBuffer.Reinterpret<int3>();
             
-            if (gridUpdated && !(walker.CurrentNodeIdx <= -1 || walker.CurrentNodeIdx >= path.Length))
+            if (gridUpdated || walker.CurrentNodeIdx <= -1 || walker.CurrentNodeIdx >= path.Length)
             {
-                int3 currentPathNodeXYZ = path[walker.CurrentNodeIdx];
-                float3 currentPathPos = grid.GetWorldPos(currentPathNodeXYZ);
-
-                grid.FindPath(currentPathPos, walker.TargetPos, ref path);
-                walker.CurrentNodeIdx = path.Length - 1;
-            }
-            else if (walker.CurrentNodeIdx <= -1 || walker.CurrentNodeIdx >= path.Length)
-            {
-                if (walker.CurrentNodeIdx <= -1 || walker.CurrentNodeIdx >= path.Length)
+                float3 startPos = translation.Value;
+                if (!gridUpdated)
                 {
-                    walker.TargetPos =
-                    random.NextFloat3Direction() *
-                    random.NextFloat(boidStation.PatrolRadius * 0.25f, boidStation.PatrolRadius);
-
+                    walker.TargetPos = random.NextFloat3Direction() * random.NextFloat(boidStation.PatrolRadius);
                     boidStation.TargetUp = random.NextFloat3Direction();
                 }
-                
+
+                int3 lastNod = int3.zero;
+                if (gridUpdated && walker.CurrentNodeIdx >= 0 && walker.CurrentNodeIdx < path.Length)
+                    lastNod = path[walker.CurrentNodeIdx];
+
+                path.Clear();
                 grid.FindPath(translation.Value, walker.TargetPos, ref path);
                 walker.CurrentNodeIdx = path.Length - 1;
+
+                if (gridUpdated && walker.CurrentNodeIdx >= 0 && walker.CurrentNodeIdx < path.Length)
+                    path[walker.CurrentNodeIdx] = lastNod;
             }
 
             if (walker.CurrentNodeIdx <= -1 || walker.CurrentNodeIdx >= path.Length)
@@ -107,7 +111,7 @@ public class BoidStationWalkerSystem : ComponentSystem
             
             velocity.Linear = lookDir * walker.MoveSpeed;
             
-            /*for (int c = 0; c < path.Length - 1; ++c)
+            for (int c = 0; c < path.Length - 1; ++c)
             {
                 int3 nxyz = path[c];
                 float3 pp = grid.GetWorldPos(nxyz);
@@ -116,7 +120,7 @@ public class BoidStationWalkerSystem : ComponentSystem
                 float3 opp = grid.GetWorldPos(onxyz);
 
                 Debug.DrawLine(pp, opp);
-            }*/
+            }
         });
     }
 }

@@ -1,4 +1,5 @@
-﻿using Unity.Entities;
+﻿// Author: Peter Richards.
+using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -9,6 +10,7 @@ public struct BoidComponent : IComponentData
     public uint GroupID;
     public float HP;
     public float DiedTime;
+    public float HitTime;
 
     public Entity SettingsEntity;
     public float3 MoveForce;
@@ -18,7 +20,7 @@ public struct BoidComponent : IComponentData
 
     public float NextAllowShootTime;
 
-    public static int TrailParticleIdx = 0;
-    public static int DeathParticleIdx = 1;
-    public static int MuzzleParticleIdx = 2;
+    public static readonly int TrailParticleIdx = 0;
+    public static readonly int DeathParticleIdx = 1;
+    public static readonly int MuzzleParticleIdx = 2;
 }

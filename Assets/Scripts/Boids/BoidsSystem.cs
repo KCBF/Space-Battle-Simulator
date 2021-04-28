@@ -8,11 +8,12 @@ using UnityEngine;
 using Unity.Jobs;
 using Unity.Physics.Authoring;
 
-//[UpdateBefore(typeof(Unity.Physics.Systems.EndFramePhysicsSystem))]
 [UpdateAfter(typeof(Unity.Physics.Systems.EndFramePhysicsSystem))]
 public class BoidsSystem : ComponentSystem
 {
     Unity.Physics.Systems.BuildPhysicsWorld physicsWorldSystem;
+    BoidUserControllerSystem boidUserControllerSystem;
+
     CollisionWorld collisionWorld;
 
     Unity.Mathematics.Random random;
@@ -20,6 +21,8 @@ public class BoidsSystem : ComponentSystem
     protected override void OnCreate()
     {
         physicsWorldSystem = World.GetOrCreateSystem<Unity.Physics.Systems.BuildPhysicsWorld>();
+        boidUserControllerSystem = World.GetOrCreateSystem<BoidUserControllerSystem>();
+
         random = new Unity.Mathematics.Random(1);
     }
 
@@ -35,10 +38,8 @@ public class BoidsSystem : ComponentSystem
 
     protected override void OnUpdate()
     {
-        var boidUserControllerSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystem<BoidUserControllerSystem>();
         if (!boidUserControllerSystem.HasSingleton<BoidUserControllerComponent>())
             return;
-
         collisionWorld = physicsWorldSystem.PhysicsWorld.CollisionWorld;
         BoidUserControllerComponent boidControllerComponent = boidUserControllerSystem.GetSingleton<BoidUserControllerComponent>();
 
@@ -83,6 +84,8 @@ public class BoidsSystem : ComponentSystem
             boid.TargetUp = up;
             boid.LineOfSightForce = lineOfSightForce;
         });
+
+        
 
         Entities.ForEach((Entity entity,
                 ref Translation translation, ref Rotation rot,
@@ -235,7 +238,7 @@ public class BoidsSystem : ComponentSystem
         Entity projectileEntity = ShootMissle(entity, boidPos, boidRot, ref boid, settings, out projectile, out spawnPos);
 
         PhysicsVelocity projectileVelocity = EntityManager.GetComponentData<PhysicsVelocity>(projectileEntity);
-        float aimModifier = random.NextFloat(0.95f, 1.05f);
+        float aimModifier = random.NextFloat(0.99f, 1.01f);
         float3 leadPos = GetTargetLeadPos(boidPos, targetPos, projectileVelocity.Linear, projectile.Speed, aimModifier);
 
         float3 lookDir = math.normalize(leadPos - spawnPos);
@@ -396,32 +399,45 @@ public class BoidsSystem : ComponentSystem
         float3 sumNeighbourVelocity;
         float3 sumNeighbourNormalDelta;
         float3 sumUpDir;
-        int neighbourCount = GetBoidNeighbourSumData(broadNeighbours, 
+
+        int friendlyCount;
+        int separateCount = GetBoidNeighbourSumData(broadNeighbours, 
             entity, boidPos, boidForward, boid, settings,
-            out sumNeighbourPos, out sumNeighbourVelocity, out sumNeighbourNormalDelta, out sumUpDir
+            out sumNeighbourPos, out sumNeighbourVelocity, out sumNeighbourNormalDelta, out sumUpDir,
+            out friendlyCount
         );
 
-        if (neighbourCount == 0)
-            return float3.zero;
+        float3 moveForce = float3.zero;
 
         // Average and finalize the boid sum neighbour values to create a total boid force.
-        float invsNeighbourCount = 1.0f / neighbourCount;
+        if (friendlyCount > 0)
+        {
+            float invsFriendlyCount = 1.0f / friendlyCount;
 
-        float3 averagePos = sumNeighbourPos * invsNeighbourCount;
-        float3 cohesionForce = averagePos - boidPos;
-        cohesionForce *= settings.CohesionWeight;
+            float3 averagePos = sumNeighbourPos * invsFriendlyCount;
+            float3 cohesionForce = averagePos - boidPos;
+            cohesionForce *= settings.CohesionWeight;
 
-        float3 averageVelocity = sumNeighbourVelocity * invsNeighbourCount;
-        float3 alignmentForce = math.normalize(averageVelocity - boidLinearVelocity);
-        alignmentForce *= settings.AlignmentWeight;
+            float3 averageVelocity = sumNeighbourVelocity * invsFriendlyCount;
+            float3 alignmentForce = math.normalize(averageVelocity - boidLinearVelocity);
+            alignmentForce *= settings.AlignmentWeight;
 
-        float3 averageSeparation = sumNeighbourNormalDelta * invsNeighbourCount;
-        float3 separationForce = averageSeparation;
-        separationForce *= settings.SeparationWeight;
+            boidUp = sumUpDir * invsFriendlyCount;
 
-        boidUp = sumUpDir * invsNeighbourCount;
+            moveForce += cohesionForce;
+            moveForce += alignmentForce;
+        }
 
-        return cohesionForce + alignmentForce + separationForce;
+        if (separateCount > 0)
+        {
+            float3 averageSeparation = sumNeighbourNormalDelta / separateCount;
+            float3 separationForce = averageSeparation;
+            separationForce *= settings.SeparationWeight;
+            
+            moveForce += separationForce;
+        }
+
+        return moveForce;
     }
 
     bool CanSeeEnemyBoidStation(Entity entity, float3 boidPos, float3 boidForward, BoidComponent boid,
@@ -460,9 +476,12 @@ public class BoidsSystem : ComponentSystem
 
     int GetBoidNeighbourSumData(in NativeList<int> broadNeighbours,
         Entity entity, float3 boidPos, float3 boidForward, BoidComponent boid, in BoidSettingsComponent settings, 
-        out float3 sumNeighbourPos, out float3 sumNeighbourVelocity, out float3 sumNeighbourNormalDelta, out float3 sumUpDir)
+        out float3 sumNeighbourPos, out float3 sumNeighbourVelocity, out float3 sumNeighbourNormalDelta, out float3 sumUpDir,
+        out int friendlyCount)
     {
-        int neighbourCount = 0;
+        int separateCount = 0;
+        friendlyCount = 0;
+
         sumNeighbourPos = float3.zero;
         sumNeighbourVelocity = float3.zero;
         sumNeighbourNormalDelta = float3.zero;
@@ -471,21 +490,34 @@ public class BoidsSystem : ComponentSystem
         foreach (int neighbourIdx in broadNeighbours)
         {
             RigidBody neighbourRigid = collisionWorld.Bodies[neighbourIdx];
+            RigidTransform neighbourTransform = neighbourRigid.WorldFromBody;
+
+            if (CanSeeBoidNeighbour(entity, boidPos, boidForward, boid, neighbourRigid, settings.BoidDetectRadius, settings.BoidDetectFOV, false))
+            {
+                sumNeighbourNormalDelta += math.normalize(boidPos - neighbourTransform.pos);
+                ++separateCount;
+                continue;
+            }
 
             if (!CanSeeBoidNeighbour(entity, boidPos, boidForward, boid, neighbourRigid, settings.BoidDetectRadius, settings.BoidDetectFOV, true))
                 continue;
-
-            RigidTransform neighbourTransform = neighbourRigid.WorldFromBody;
+                        
             PhysicsVelocity neighbourVelocity = EntityManager.GetComponentData<PhysicsVelocity>(neighbourRigid.Entity);
-            ++neighbourCount;
+            BoidComponent neighbourBoid = EntityManager.GetComponentData<BoidComponent>(neighbourRigid.Entity);
 
-            sumNeighbourPos += neighbourTransform.pos;
-            sumNeighbourVelocity += neighbourVelocity.Linear;
+            if (neighbourBoid.HitTime <= Time.ElapsedTime)
+            {
+                sumNeighbourPos += neighbourTransform.pos;
+                sumNeighbourVelocity += neighbourVelocity.Linear;
+                sumUpDir += math.rotate(neighbourTransform.rot, math.up());
+                ++friendlyCount;
+            }
+
             sumNeighbourNormalDelta += math.normalize(boidPos - neighbourTransform.pos);
-            sumUpDir += math.rotate(neighbourTransform.rot, math.up());
+            ++separateCount;
         }
 
-        return neighbourCount;
+        return separateCount;
     }
 
     float3 GetBoidLineOfSightForce(Entity entity, float3 boidPos, float3 boidForward, float3 boidUp, BoidComponent boid, in BoidSettingsComponent settings)

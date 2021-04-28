@@ -1,3 +1,4 @@
+// Author: Peter Richards.
 using Unity.Mathematics;
 using Unity.Collections;
 using UnityEngine;
@@ -15,6 +16,7 @@ public class AStarGrid : MonoBehaviour
     public int3 gridDimensions;
 
     public NativeBitArray nodeTraversableBits;
+    HashSet<int> walkerNodes = new HashSet<int>();
 
     private void OnValidate()
     {
@@ -29,12 +31,19 @@ public class AStarGrid : MonoBehaviour
 
     float3 Origin { get { return (float3)transform.position - gridSize * 0.5f + nodeSize * 0.5f; } }
 
+    public bool IsTraversable(float3 xyz)
+    {
+        return nodeTraversableBits.IsSet(GetNodeI(GetNodeXYZ(xyz)));
+    }
+
     public bool InBounds(int3 xyz)
     {
-        return xyz.x >= 0.0f && xyz.x < gridDimensions.x &&
-               xyz.y >= 0.0f && xyz.y < gridDimensions.y &&
-               xyz.z >= 0.0f && xyz.z < gridDimensions.z;
+        return xyz.x >= 0 && xyz.x < gridDimensions.x &&
+               xyz.y >= 0 && xyz.y < gridDimensions.y &&
+               xyz.z >= 0 && xyz.z < gridDimensions.z;
     }
+
+    public bool InBounds(float3 xyz) { return InBounds(GetNodeXYZ(xyz)); }
 
     public void SetGrid(EntityManager entityManager, CollisionWorld collisionWorld)
     {
@@ -46,7 +55,8 @@ public class AStarGrid : MonoBehaviour
         if (nodeTraversableBits.IsCreated)
             nodeTraversableBits.Dispose();
         nodeTraversableBits = new NativeBitArray(gridDimensions.x * gridDimensions.y * gridDimensions.z, Allocator.Persistent);
-        
+        walkerNodes.Clear();
+
         for (int z = 0; z < gridDimensions.z; z++)
         {
             int k = gridDimensions.y * gridDimensions.x * z;
@@ -98,6 +108,14 @@ public class AStarGrid : MonoBehaviour
                 hitObstacle = true;
                 break;
             }
+
+            if (entityManager.HasComponent<BoidStationComponent>(collisionWorld.Bodies[hitObjs[rI]].Entity))
+            {
+                walkerNodes.Add(i);
+
+                hitObstacle = true;
+                break;
+            }
         }
 
         nodeTraversableBits.Set(i, !hitObstacle);
@@ -116,14 +134,15 @@ public class AStarGrid : MonoBehaviour
             {
                 for (int x = 0; x < gridDimensions.x; x++)
                 {
-                    bool traversable = nodeTraversableBits.IsSet(GetNodeI(new int3(x, y, z)));
+                    int3 pos = new int3(x, y, z);
+                    bool traversable = nodeTraversableBits.IsSet(GetNodeI(pos));
 
                     if (traversable)
                         Gizmos.color = Color.green;
                     else
                         Gizmos.color = Color.red;
 
-                    if (!traversable)
+                    if (!traversable && !walkerNodes.Contains(GetNodeI(pos)))
                         Gizmos.DrawCube(GetWorldPos(x, y, z), nodeSize * 0.9f);
                 }
             }
@@ -135,13 +154,18 @@ public class AStarGrid : MonoBehaviour
         int k = gridDimensions.y * gridDimensions.x * xyz.z;
         int j = k + gridDimensions.x * xyz.y;
         int i = j + xyz.x;
-        return math.clamp(i, 0, nodeTraversableBits.Length - 1);
+        return i;
     }
 
     int3 GetNodeXYZ(float3 worldPos)
     {
         int3 xyz = (int3)math.round((worldPos - Origin) / nodeSize);
-        return math.clamp(xyz, int3.zero, gridDimensions - 1);
+        return xyz;
+    }
+
+    public bool FindPath(int3 start, int3 end, ref DynamicBuffer<int3> path)
+    {
+        return AStar(start, end, ref path);
     }
 
     public bool FindPath(float3 start, float3 end, ref DynamicBuffer<int3> path)
@@ -178,13 +202,57 @@ public class AStarGrid : MonoBehaviour
         }
     }
 
+    int3 GetValidStartNode(int3 startXYZ)
+    {
+        startXYZ = math.clamp(startXYZ, 0, gridDimensions - 1);
+        int startNodeI = GetNodeI(startXYZ);
+
+        if (InBounds(startXYZ) && nodeTraversableBits.IsSet(startNodeI))
+            return startXYZ;
+        
+        Dictionary<int, FNode> openSet = new Dictionary<int, FNode>();
+        HashSet<int> closedSet = new HashSet<int>();
+
+        openSet.Add(startNodeI, new FNode { XYZ = startXYZ });
+
+        while (openSet.Count > 0)
+        {
+            startXYZ = openSet.First().Value.XYZ;
+            startNodeI = GetNodeI(startXYZ);
+            openSet.Remove(startNodeI);
+            closedSet.Add(startNodeI);
+
+            foreach (int3 neighbourOffset in neighbourOffsets)
+            {
+                int3 neighbourXYZ = startXYZ + neighbourOffset;
+                if (!InBounds(neighbourXYZ))
+                    continue;
+
+                int neighbourI = GetNodeI(neighbourXYZ);
+                if (nodeTraversableBits.IsSet(neighbourI))
+                    return neighbourXYZ;
+
+                if (!closedSet.Contains(neighbourI) && !openSet.ContainsKey(neighbourI))
+                    openSet.Add(neighbourI, new FNode { XYZ = neighbourXYZ });
+            }
+        }
+        
+        return new int3(-1, -1, -1);
+    }
+
     bool AStar(int3 startXYZ, int3 endXYZ, ref DynamicBuffer<int3> path)
     {
+        startXYZ = GetValidStartNode(startXYZ);
+        endXYZ = GetValidStartNode(endXYZ);
+        
         if (!InBounds(startXYZ) || !InBounds(endXYZ))
             return false;
-
+        
         int startNodeI = GetNodeI(startXYZ);
         int endNodeI = GetNodeI(endXYZ);
+        
+        if (!nodeTraversableBits.IsSet(endNodeI))
+            return false;
         
         // G costs repersents the value of the total cost to reach a node from the start node.
         NativeArray<int> gCosts = new NativeArray<int>(nodeTraversableBits.Length, Allocator.Temp);
@@ -235,7 +303,6 @@ public class AStarGrid : MonoBehaviour
         int3 currentNodeXYZ = endXYZ;
         float3 currentTraversalDir = float3.zero;
 
-        path.Clear();
         path.Add(endXYZ);
         
         // Trace path from end to start.
@@ -252,8 +319,6 @@ public class AStarGrid : MonoBehaviour
             currentNodeXYZ = parentNodeXYZ;
             currentTraversalDir = traversalDir;
         }
-        
-        path.Add(startXYZ);
     }
 
     static readonly int3[] neighbourOffsets;
@@ -299,8 +364,9 @@ public class AStarGrid : MonoBehaviour
             
             // If traversing to this neighbour from the current node is cheaper then add/update it.
             int newGCost = gCosts[currentNodeI] + GetDstTo(currentNodeXYZ, neighbourXYZ);
-            
-            if (openSet.ContainsKey(neighbourI) && newGCost >= gCosts[neighbourI])
+            bool neighbourInOpenSet = openSet.ContainsKey(neighbourI);
+
+            if (neighbourInOpenSet && newGCost >= gCosts[neighbourI])
                 continue;
 
             // Update new neighbour costs.
@@ -311,7 +377,7 @@ public class AStarGrid : MonoBehaviour
             int fCost = newGCost + hCost;
             FNode newFNode = new FNode { XYZ = neighbourXYZ, FCost = fCost, HCost = hCost };
             
-            if (openSet.ContainsKey(neighbourI))
+            if (neighbourInOpenSet)
                 fCosts.Remove(openSet[neighbourI]);
 
             fCosts.Add(newFNode);

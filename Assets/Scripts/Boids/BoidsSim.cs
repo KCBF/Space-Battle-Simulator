@@ -13,6 +13,7 @@ public class BoidGroup
     public bool gizmo = true;
     public uint numToSpawn = 10;
     public float spawnRadius = 100.0f;
+    public float3 spawnLoc = float3.zero;
 
     public GameObject boidObj;
     public Entity boidEntity;
@@ -122,14 +123,14 @@ public class BoidsSim : MonoBehaviour
 
         asteroids.SpawnAsteroids(entityManager, random);
 
-        ProjectileSystem projectileSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystem<ProjectileSystem>();
+        ProjectileSystem projectileSystem = World.DefaultGameObjectInjectionWorld.GetOrCreateSystem<ProjectileSystem>();
         projectileSystem.ParticleManagers = new EntityParticleManager[boidGroups.Length];
         for (uint i = 0; i < boidGroups.Length; ++i)
         {
             projectileSystem.ParticleManagers[i] = boidGroups[i].missleParticleManager;
         }
 
-        BoidStationWalkerSystem stationWalkerSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystem<BoidStationWalkerSystem>();
+        BoidStationWalkerSystem stationWalkerSystem = World.DefaultGameObjectInjectionWorld.GetOrCreateSystem<BoidStationWalkerSystem>();
         stationWalkerSystem.grid = FindObjectOfType<AStarGrid>();
 
         World.DefaultGameObjectInjectionWorld
@@ -147,8 +148,8 @@ public class BoidsSim : MonoBehaviour
                 entityManager.AddComponentObject(entity, particleManager);
             }
             
-            float3 spawnPos = random.NextFloat3Direction() * random.NextFloat(boidGroup.spawnRadius * 0.25f, boidGroup.spawnRadius);
-            spawnPos += boidGroup.settings.MapCentre;
+            float3 spawnPos = random.NextFloat3Direction() * random.NextFloat(boidGroup.spawnRadius * 0.15f, boidGroup.spawnRadius);
+            spawnPos += boidGroup.spawnLoc;
 
             float3 vel = random.NextFloat3Direction() * boidGroup.settings.MoveSpeed;
 

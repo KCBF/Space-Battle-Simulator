@@ -13,5 +13,5 @@ public struct BoidStationComponent : IComponentData
     public uint ParticleManagerIdx;
     public bool deaded;
 
-    public static uint DeathParticleIdx = 0;
+    public static readonly uint DeathParticleIdx = 0;
 }
